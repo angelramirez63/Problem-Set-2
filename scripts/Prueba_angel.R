@@ -25,6 +25,6 @@ tsp <- read.csv("test_personas.csv") %>%
   as_tibble()
 
 trp <- readRDS("train_personas.rds") %>% 
-  as_tibble() #Por el paso del archivo se convirtió a rds
+  as_tibble() #Por el peso del archivo se convirtió a rds
 
 
