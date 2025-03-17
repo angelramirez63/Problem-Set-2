@@ -12,19 +12,19 @@ setwd()
 rm(wd)
 
 # Cargar los datos
-ss <- read.csv("sample_submission.csv") %>% 
+sample_sub <- read.csv("sample_submission.csv") %>% 
   as_tibble()
 
-tsh <- read.csv("test_hogares.csv") %>% 
+test_hogares <- read.csv("test_hogares.csv") %>% 
   as_tibble()
 
-trh <- read.csv("train_hogares.csv") %>% 
+train_hogares <- read.csv("train_hogares.csv") %>% 
   as_tibble()
 
-tsp <- read.csv("test_personas.csv") %>% 
+test_personas <- read.csv("test_personas.csv") %>% 
   as_tibble()
 
-trp <- readRDS("train_personas.rds") %>% 
+train_personas <- readRDS("train_personas.rds") %>% 
   as_tibble() #Por el peso del archivo se convirtió a rds
 
 
