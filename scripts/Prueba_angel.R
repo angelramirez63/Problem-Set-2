@@ -1,8 +1,7 @@
 #### Preparación
 library(pacman)
 
-p_load(tidyverse, rvest, rebus, htmltools, rio, skimr,
-       visdat, margins, stargazer, here, VIM, caret, dplyr, stats)
+p_load(tidyverse, glmnet, caret, Mlmetrics, Metrics)
 
 rm(list = ls())
 
