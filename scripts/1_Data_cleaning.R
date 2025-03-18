@@ -1,45 +1,54 @@
-#Problem Set 1 -----------------------------------------------------------------
+
+#============================= Problem Set 2 ===================================
+
+
+
+#0. Preparación ambiente de trabajo --------------------------------------------
+
+##Limpiar ambiente####
+
 rm(list = ls())
+cat("\014")
 
-#0. Preparación ----------------------------------------------------------------
+##Librerías####
 
-# Librerías 
 if(!require(pacman)) install.packages("pacman") ; require(pacman)
-
-library(pacman)
 
 p_load(tidyverse, rvest, rebus, htmltools, rio, skimr,
        visdat, margins, stargazer, here, VIM, caret, 
        dplyr, gridExtra)
 
 
-# Crear el directorio 
+##Crear el directorio#### 
 wd <- here()
 setwd(wd)
 rm(wd)
 
-#2.1. Obtener datos ------------------------------------------------------------
+#2.1. Cargar datos ------------------------------------------------------------
+ 
+##Ejemplo Kaggle####
+sample_sub <- read.csv("stores/sample_submission.csv") %>% 
+  as_tibble()
+
+##Testeo#### 
+test_hogares <- read.csv("stores/test_hogares.csv") %>% 
+  as_tibble()
+
+test_personas <- read.csv("stores/test_personas.csv") %>% 
+  as_tibble()
 
 
-# Link para el web scrapping
-link_GEIH <- "https://ignaciomsarmiento.github.io/GEIH2018_sample"
+test_full <- left_join(test_personas, test_hogares, by = "id")
 
-datos_GEIH <-data.frame()
+##Entrenamiento####
+train_hogares <- read.csv("stores/train_hogares.csv") %>% 
+  as_tibble()
 
-for(page in 1:10) {
-  # Obtenemos la tabla con los datos de cada página
-  tabla <- read_html(paste0(link_GEIH, "/pages/geih_page_", page, ".html")) %>%
-    html_table() %>%
-    as.data.frame()
-  
-  # Agregamos la nueva tabla a nuestra base de datos
-  datos_GEIH <- bind_rows(datos_GEIH, tabla)
-  
-  #Registro de progreso
-  print(paste("Página:", page))
-}
+train_personas <- readRDS("stores/train_personas.rds") %>% 
+  as_tibble() #Por el peso del archivo se convirtió a rds
 
-export(datos_GEIH, 'stores/datos_GEIH.rds')
+train_full <- left_join(train_personas, train_hogares, by = "id")
+
 
 #2.2. Limpieza de datos ---------------------------------------------------------
 
