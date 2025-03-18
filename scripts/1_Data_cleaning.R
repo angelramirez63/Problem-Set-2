@@ -19,12 +19,12 @@ p_load(tidyverse, rvest, rebus, htmltools, rio, skimr,
        dplyr, gridExtra)
 
 
-##Crear el directorio#### 
+##Definir el directorio#### 
 wd <- here()
 setwd(wd)
 rm(wd)
 
-#2.1. Cargar datos ------------------------------------------------------------
+#1 Cargar datos ----------------------------------------------------------------
  
 ##Ejemplo Kaggle####
 sample_sub <- read.csv("stores/sample_submission.csv") %>% 
@@ -37,8 +37,11 @@ test_hogares <- read.csv("stores/test_hogares.csv") %>%
 test_personas <- read.csv("stores/test_personas.csv") %>% 
   as_tibble()
 
-
 test_full <- left_join(test_personas, test_hogares, by = "id")
+
+#Exportar base de testeo 
+export(test_full, 'stores/test_full.rds')
+
 
 ##Entrenamiento####
 train_hogares <- read.csv("stores/train_hogares.csv") %>% 
@@ -49,25 +52,82 @@ train_personas <- readRDS("stores/train_personas.rds") %>%
 
 train_full <- left_join(train_personas, train_hogares, by = "id")
 
+#Exportar base de entrenamiento 
+export(train_full, 'stores/train_full.rds')
 
-#2.2. Limpieza de datos ---------------------------------------------------------
+
+#2 Exploración base de entrenamiento -------------------------------------------
 
 rm(list = ls())
-db <- readRDS("stores/datos_GEIH.rds") %>% 
-  as_tibble()
+train_full <- readRDS("stores/train_full.rds")
 
-#i) la condicción para conservar la observación es:  age == edad_personas , ocu === dummy_si_la_persona esta ocupada
 
-db_limpia <- db %>% 
-  filter(age >= 18 & ocu == 1) 
+##Exploración####
 
-"El método que usamos da lo mismo que el que usaron en la complementaria:
-db_limpia2 <- db %>% filter(totalHoursWorked>0)"
+train_skim <- skim(train_full) #Exploración inicial de la estructura de la base 
+train_skim
+head(train_full) #Visualizar 5 primeras filas
+table(train_full$Pobre) #Tabular variables de resultado 
 
-#Eliminamos las observaciones que tienen valores faltantes en neustra variable de resultado
 
-db_nas <- db_limpia %>% filter(is.na(y_ingLab_m_ha))
-db_limpia <- db_limpia %>% filter(!is.na(y_ingLab_m_ha))
+##Resultados exploración####
+
+#i)Número de observaciones: 543109 personas que pertenecen a un hogar 
+#ii)Número de variables: 157 variables previó a la limpieza
+#iii) Tipos de las variables: hay 3 de tipo str y 154 númericas previó a la limpieza
+#     hay variables que son de tipo númericas que probablemente son categóricas 
+#iv) la clase Pobre esta desbalanceada 
+
+
+
+#3 Limpieza de datos -----------------------------------------------------------
+
+
+
+##Parte 1 - Limpieza general####
+
+###Eliminar variables sin mucha información####
+
+#Remover variables que solo tienen missing values o no tienen variación 
+train_clean <- train_full %>% 
+               select_if(~ !all(is.na(.)) & length(unique(.))>1) # Ninguna variable cumple esta condición 
+
+#Proporción de missings por variable 
+missings <- train_skim %>% 
+            select(skim_variable, n_missing, complete_rate) %>% 
+            filter(complete_rate != 1)
+
+
+#Visualización de la proporición de missings por variable 
+#Alrededor de la 50% de la variables tienen un complete rate menos a 0,25
+ggplot(missings, aes(x = reorder(skim_variable, +complete_rate) , y =  complete_rate)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  coord_flip() +
+  labs(title = "Complete Rate", x = "Nombre variable", y = "Proporción de no nulos")+ 
+  theme(axis.text = element_text(size = 5))  
+
+
+#Remover variables que tiene el menos del 0.25 de complete rate o menos: 
+#son 86 variables que cumplen esta condición 
+missings_75 <- missings %>% 
+               filter(complete_rate <= 0.25)
+
+train_clean <- train_clean %>% 
+               select(-P6500, -P6510, -P6510s1, -P6510s2, -P6545, -P6545s1, 
+                      -P6545s2, -P6580, -P6580s1, -P6580s2, -P6585s1, -P6585s1a1, 
+                      -P6585s1a2, -P6585s2, -P6585s2a1, -P6585s2a2, -P6585s3, -P6585s3a1, 
+                      -P6585s3a2, -P6585s4, -P6585s4a1, -P6585s4a2, -P6590, -P6590s1, -P6600, 
+                      -P6600s1, -P6610, -P6610s1, -P6620, -P6620s1, -P6630s1, -P6630s1a1, -P6630s2, 
+                      -P6630s2a1, -P6630s3, -P6630s3a1, -P6630s4, -P6630s4a1, -P6630s6, -P6630s6a1, 
+                      -P6750, -P6760, -P550, -P7045, -P7050, -P7110, -P7120, -P7140s1, -P7140s2, -P7150, 
+                      -P7160, -P7310, -P7350, -P7422, -P7422s1, -P7500s1, -P7500s2, -P7500s3, -P7510s1, 
+                      -P7510s2, -P7510s3, -P7510s5, -P7510s6, -P7510s7, -Des, -Ie, -Imdi, -Cclasnr2, -Cclasnr3, 
+                      -Cclasnr4, -Cclasnr5, -Cclasnr6, -Cclasnr7, -Cclasnr8, -Cclasnr11, -Impaes, -Isaes, -Iees, 
+                      -Imdies, -Iof1es, -Iof2es, -Iof3hes, -Iof3ies, -Iof6es, -Ingtotes, -P5100) 
+
+
+
+
 
 # Eliminamos las variables para las cuales más del 60% de las observaciones son faltantes
 missing_percent <- colMeans(is.na(db_limpia)) * 100
