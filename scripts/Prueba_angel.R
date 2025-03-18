@@ -1,7 +1,7 @@
 #### Preparación
 library(pacman)
 
-p_load(tidyverse, glmnet, caret, Mlmetrics, Metrics)
+p_load(tidyverse, here, glmnet, caret, Mlmetrics, Metrics)
 
 rm(list = ls())
 
