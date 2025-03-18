@@ -7,7 +7,7 @@ rm(list = ls())
 
 # Crear el directorio 
 wd <- here()
-setwd()
+setwd(wd)
 rm(wd)
 
 # Cargar los datos
