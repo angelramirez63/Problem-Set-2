@@ -16,7 +16,7 @@ if(!require(pacman)) install.packages("pacman") ; require(pacman)
 
 p_load(tidyverse, rvest, rebus, htmltools, rio, skimr,
        visdat, margins, stargazer, here, VIM, caret, 
-       dplyr, gridExtra)
+       dplyr, gridExtra, corrplot)
 
 
 ##Definir el directorio#### 
@@ -86,6 +86,12 @@ table(train_full$Pobre) #Tabular variables de resultado
 
 ##Parte 1 - Limpieza general####
 
+
+###Variables con todas las observaciones###
+
+full_at_100 <- train_skim %>% 
+  filter(complete_rate == 1) # Hay 30 variables que están completas al 100%
+
 ###Eliminar variables sin mucha información####
 
 #Remover variables que solo tienen missing values o no tienen variación 
@@ -112,6 +118,7 @@ ggplot(missings, aes(x = reorder(skim_variable, +complete_rate) , y =  complete_
 missings_75 <- missings %>% 
                filter(complete_rate <= 0.25)
 
+#Las variables que se van a remover son las que están en missings_75
 train_clean <- train_clean %>% 
                select(-P6500, -P6510, -P6510s1, -P6510s2, -P6545, -P6545s1, 
                       -P6545s2, -P6580, -P6580s1, -P6580s2, -P6585s1, -P6585s1a1, 
@@ -126,6 +133,52 @@ train_clean <- train_clean %>%
                       -Imdies, -Iof1es, -Iof2es, -Iof3hes, -Iof3ies, -Iof6es, -Ingtotes, -P5100) 
 
 
+
+###Imputar missings en las variables con más del 60% de observaciones####
+
+#Visulizar cuales variables cumplen esta condición: 
+train_clean_skim <- skim(train_clean) %>% filter(complete_rate != 1)
+
+ggplot(train_clean_skim, aes(x = reorder(skim_variable, +complete_rate) , y =  complete_rate)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  coord_flip() +
+  labs(title = "Complete Rate", x = "Nombre variable", y = "Proporción de no nulos")+ 
+  theme(axis.text = element_text(size = 5))  
+
+
+full_at_60 <- train_clean_skim %>% 
+              filter(complete_rate >= 0.6) # Hay 24 variables que están completas al 75% o y 1 que tiene aproximadamente 63,5% 
+
+#Nota: de las 71 variables de la base limpia hay 55 que tienen al menos el 63,5% de las observaciones completas de estas 30 están completas al 100%
+
+##Parte 2 - Limpieza granular####
+        
+#Visisualizar los valores faltantes de estás variables: 
+#las variables que se van a conservar son las que están full_at_60
+
+missings_full_at_60 <- train_clean %>% 
+                        select(P6090, P6100, P6210, P6210s1, P6240, P7495, P7500s1a1, 
+                               P7500s2a1, P7500s3a1, P7505, P7510s1a1, P7510s2a1, 
+                               P7510s3a1, P7510s5a1, P7510s6a1, P7510s7a1, Pet, Iof1, 
+                               Iof2, Iof3h, Iof3i, Iof6, Ingtotob, Ingtot, P5130, Pobre)
+
+skim(missings_full_at_60)
+
+
+##Variables Categorícas: 
+
+#P6090 - seguridad social:
+table(train_clean$Pobre, train_clean$P6090) # Los Pobres reportan en su mayoría estar afiliados a seguridad social 
+
+#P6100 - regimen de seguridad social: 
+table(train_clean$Pobre, train_clean$P6090) # Los Pobres reportan en su mayoría estar afiliados al regimen subsidiado 
+
+#P6210 - máximo nivel educatio: 
+table(train_clean$Pobre, train_clean$P6210) # Los Pobres tiene en su mayoría has educación media es decir de 6to a 9to -> Crear Categoría max9to e imputar con esa
+
+
+
+#===============================================================================
 
 
 
