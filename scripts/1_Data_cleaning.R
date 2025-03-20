@@ -134,6 +134,10 @@ train_clean <- train_clean %>%
 
 
 
+
+##Parte 2 - Limpieza granular####
+
+
 ###Imputar missings en las variables con más del 60% de observaciones####
 
 #Visulizar cuales variables cumplen esta condición: 
@@ -147,11 +151,10 @@ ggplot(train_clean_skim, aes(x = reorder(skim_variable, +complete_rate) , y =  c
 
 
 full_at_60 <- train_clean_skim %>% 
-              filter(complete_rate >= 0.6) # Hay 24 variables que están completas al 75% o y 1 que tiene aproximadamente 63,5% 
+  filter(complete_rate >= 0.6) # Hay 24 variables que están completas al 75% o y 1 que tiene aproximadamente 63,5% 
 
 #Nota: de las 71 variables de la base limpia hay 55 que tienen al menos el 63,5% de las observaciones completas de estas 30 están completas al 100%
 
-##Parte 2 - Limpieza granular####
         
 #Visisualizar los valores faltantes de estás variables: 
 #las variables que se van a conservar son las que están full_at_60
@@ -162,25 +165,54 @@ missings_full_at_60 <- train_clean %>%
                                P7510s3a1, P7510s5a1, P7510s6a1, P7510s7a1, Pet, Iof1, 
                                Iof2, Iof3h, Iof3i, Iof6, Ingtotob, Ingtot, P5130, Pobre)
 
+
+#De las 25 variables 22 tienes el mismo número de missings values que son 95450
+#¿Habra personas que no respondieron nada en ninguna de las preguntas? -> ¿Habra filas que son solo missings?
 skim(missings_full_at_60)
 
 
-##Variables Categorícas: 
+
+
+##Variables Categorícas a imputar: 
 
 #P6090 - seguridad social:
-table(train_clean$Pobre, train_clean$P6090) # Los Pobres reportan en su mayoría estar afiliados a seguridad social 
+table(train_clean$Pobre, train_clean$P6090) # Los Pobres reportan en su mayoría estar afiliados a seguridad social > Categoría más común 
 
 #P6100 - regimen de seguridad social: 
-table(train_clean$Pobre, train_clean$P6090) # Los Pobres reportan en su mayoría estar afiliados al regimen subsidiado 
+table(train_clean$Pobre, train_clean$P6090) # Los Pobres reportan en su mayoría estar afiliados al regimen subsidiado -> Categoría más común 
 
-#P6210 - máximo nivel educatio: 
+#P6210 - máximo nivel educativo categoríco: 
 table(train_clean$Pobre, train_clean$P6210) # Los Pobres tiene en su mayoría has educación media es decir de 6to a 9to -> Crear Categoría max9to e imputar con esa
+
+#P6210s1 - máxio grado alcanzado: 
+# Se puede usar para imputar la información de la variable P6210 -> Imputar con valor alguno de los extremos del intervalo alcanzado o pensar otra forma 
+
+#P6240 - actividad que ocupo más tiempo: 
+table(train_clean$Pobre, train_clean$P6240) # Los Pobres usason la mayor parte de su tiempo trabajando, en oficios del hogar o estudiando -> se podría imputar usando la categoría más común condicional a la edad(P6040) y al género(P6020)
+#Si es mujer y no reporta ingreso imputar como oficio del hogar(4), si sí lo reporta imputar como trabajando(1)  
+#Si las personas tienen 20 año o menos es probable que estén estudiando de los 21 para arriba es más probable que las personas estén trabajando 
+
+#P7495 - Recibio arriendo a pensiones: 
+table(train_clean$Pobre, train_clean$P7495) # Los Pobres no reciben arriendo o pensiones -> imputar catergortía más común para todas las observaciones
+
+#P7500s1a1 - Valor recibido por arriendo: 
+table(train_clean$P7500s1a1, train_clean$Pobre) # Los Pobres en promedio no reciben arriendo -> imputar con cero si la persona es Pobre, pensar que hacer cuando no es pobre -> La mayoría de las personas no reciben un arriendo 
+
+#P7500s2a1 - Valor recibido por pensión: 
+table(train_clean$P7500s2a1, train_clean$Pobre) # Los Pobres en promedio no reciben pensión -> imputar con cero si la persona es Pobre,  pensar que hacer cuando no es pobre  -> La mayoría de las personas no reciben pensión 
+
+#P7500s3a1 - Recibio pensión alimentaria por divorcio o separación: 
+table(train_clean$P7500s3a1, train_clean$Pobre) #Los Pobres en promedio no recibne pensión alimentaria -> imputar con cero -> la mayoría de personas no recibne cuato alimentaria 
+
+
+#P7505 - Recibio dinero de alguin que no sea el gob: 
+table(train_clean$P7505, train_clean$Pobre) #Imputar con la categoría más común 
 
 
 
 #===============================================================================
 
-
+#===============================================================================
 
 # Eliminamos las variables para las cuales más del 60% de las observaciones son faltantes
 missing_percent <- colMeans(is.na(db_limpia)) * 100
