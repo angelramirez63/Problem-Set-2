@@ -1,7 +1,15 @@
 #### Preparación
 library(pacman)
 
-p_load(tidyverse, here, glmnet, caret, Mlmetrics, Metrics)
+p_load(tidyverse,
+       here,
+       skimr,
+       glmnet,    # Modelos de regresión regularizados (EN, Lasso y Ridge).
+       caret,
+       MLmetrics, # Calcular metricas
+       MLeval,    # Evaluar modelos de clasificación
+       Metrics
+)
 
 rm(list = ls())
 
