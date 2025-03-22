@@ -105,6 +105,8 @@ train_hogares <- train_hogares %>%
          factor_ex_dep = Fex_dpto
   )
 
+#-----------------------------------------------------------------------------#
+
 ##------Limpieza test_hogares------##
 
 test_hogares  %>% 
@@ -142,6 +144,8 @@ test_hogares <- test_hogares %>%
          factor_exp = Fex_c,
          factor_ex_dep = Fex_dpto
   )
+
+#-----------------------------------------------------------------------------#
 
 ##------Limpieza train_personas------##
 
@@ -242,6 +246,14 @@ train_personas <- train_personas %>%
          factor_ex_dep = Fex_dpto
   )
 
+#Utilizamos K-Nearest Neighbour para imputar los missings que quedan
+train_personas <- kNN(train_personas)
+"kNN se demora mucho, entonces vale la pena hacer otras aproximaciones a la imputación
+de variables primero y luego llenar las que faltan usando kNN"
+missing_percent2 <- colMeans(is.na(train_personas)) * 100
+train_personas <- train_personas %>% select(!ends_with("_imp"))
+#-----------------------------------------------------------------------------#
+
 ##------Limpieza test_personas------##
 
 test_personas  %>% 
@@ -329,3 +341,10 @@ test_personas <- test_personas %>%
          factor_exp = Fex_c,
          factor_ex_dep = Fex_dpto
   )
+
+#Utilizamos K-Nearest Neighbour para imputar los missings que quedan
+test_personas <- kNN(test_personas)
+"kNN se demora mucho, entonces vale la pena hacer otras aproximaciones a la imputación
+de variables primero y luego llenar las que faltan usando kNN"
+missing_percent2 <- colMeans(is.na(test_personas)) * 100
+test_personas <- test_personas %>% select(!ends_with("_imp"))
