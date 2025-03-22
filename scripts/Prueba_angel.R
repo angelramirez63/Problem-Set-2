@@ -4,6 +4,7 @@ library(pacman)
 p_load(tidyverse,
        here,
        skimr,
+       VIM,
        glmnet,    # Modelos de regresión regularizados (EN, Lasso y Ridge).
        caret,
        MLmetrics, # Calcular metricas
@@ -105,6 +106,13 @@ train_hogares <- train_hogares %>%
          factor_ex_dep = Fex_dpto
   )
 
+#Utilizamos K-Nearest Neighbour para imputar los missings que quedan
+train_hogares <- kNN(train_hogares)
+"kNN se demora mucho, entonces vale la pena hacer otras aproximaciones a la imputación
+de variables primero y luego llenar las que faltan usando kNN"
+missing_percent2 <- colMeans(is.na(train_hogares)) * 100
+train_hogares <- train_hogares %>% select(!ends_with("_imp"))
+
 #-----------------------------------------------------------------------------#
 
 ##------Limpieza test_hogares------##
@@ -144,6 +152,12 @@ test_hogares <- test_hogares %>%
          factor_exp = Fex_c,
          factor_ex_dep = Fex_dpto
   )
+
+test_hogares <- kNN(test_hogares)
+"kNN se demora mucho, entonces vale la pena hacer otras aproximaciones a la imputación
+de variables primero y luego llenar las que faltan usando kNN"
+missing_percent2 <- colMeans(is.na(test_hogares)) * 100
+test_hogares <- test_hogares %>% select(!ends_with("_imp"))
 
 #-----------------------------------------------------------------------------#
 
