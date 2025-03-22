@@ -34,6 +34,7 @@ test_personas <- read.csv("test_personas.csv") %>%
 train_personas <- readRDS("train_personas.rds") %>% 
   as_tibble() #Por el peso del archivo se convirtió a rds
 
+
 #-----------------------------------------------------------------------------#
 
 ##------Limpieza train_hogares------##
@@ -42,8 +43,7 @@ train_hogares  %>%
   select(id)  %>%
   head()
 
-##(Revisar calsificación DANE)
-
+#Revisar calsificación DANE
 table(train_hogares$Pobre)
 
 train_hogares<- train_hogares %>% mutate(Pobre_hand=ifelse(Ingpcug<Lp,1,0))
@@ -81,7 +81,6 @@ train_hogares <- train_hogares %>%
     P5090 = as.factor(P5090),
     Clase = as.factor(Clase),
     Pobre = factor(Pobre, levels = c(1,0), labels = c("Pobre","Otros")),
-    Indigente = as.factor(Indigente),
     Depto = as.factor(Depto)
   )
 
@@ -122,6 +121,14 @@ missing_tab
 test_hogares <- test_hogares %>% 
   select(-P5100, -P5140) # Eliminamos variables con más de 60% en missing values
 
+# Convertir variables categóricas en factores
+test_hogares <- test_hogares %>%
+  mutate(
+    P5090 = as.factor(P5090),
+    Clase = as.factor(Clase),
+    Depto = as.factor(Depto)
+  )
+
 # Renombrar variables
 test_hogares <- test_hogares %>% 
   rename(cabecera = Clase,
@@ -144,7 +151,7 @@ train_personas  %>%
 
 # Creamos la variable female
 train_personas <- train_personas %>% 
-  mutate(female = ifelse(P6020 == 0, yes = 1 , no = 0)) %>%
+  mutate(female = ifelse(P6020 == 2, yes = 1 , no = 0)) %>%
   select(-P6020)
 
 # Dejar las mísmas variables que la base test personas
@@ -159,6 +166,12 @@ train_personas <- train_personas %>%
          -Cclasnr11, -Impaes, -Isaes, -Iees, -Imdies, -Iof1es, -Iof2es, -Iof3hes, -Iof3ies, 
          -Iof6es, -Ingtotob, -Ingtotes, -Ingtot)
 
+# Observar si los hogares son los mismos en las dos bases
+train_personas_grouped <- train_personas %>%
+  group_by(id) %>%
+  summarise(n_personas = n())  # Cuenta el número de personas por id
+all(sort(train_personas_grouped$id) == sort(train_hogares$id)) # Ver si contienen los mismos elementos, sin importar el orden
+
 # Observar la cantidad de missing values de cada variable
 missing_values<-colSums(is.na(train_personas))
 missing_tab<-data.frame(
@@ -166,16 +179,68 @@ missing_tab<-data.frame(
 )
 missing_tab
 
+# Calcular el porcentaje de valores faltantes por variable
+missing_percent <- colMeans(is.na(train_personas)) * 100  
+variables_60_NA_train <- names(missing_percent[missing_percent > 60])
+print(variables_60_NA_train)
+
 # Eliminar variables con más del 60% de variables como missing values
 missing_percent <- colMeans(is.na(train_personas)) * 100
-db <- train_personas[, missing_percent <= 60]
+train_personas <- train_personas[, missing_percent <= 60]
 
 # Observar los tipos de variable
 tipo_variables <- data.frame(
-  Variable = names(train_hogares),
-  Tipo = sapply(train_hogares, class)
+  Variable = names(train_personas),
+  Tipo = sapply(train_personas, class)
 )
 print(tipo_variables)
+
+# Convertir variables categóricas en factores
+train_personas <- train_personas %>%
+  mutate(
+    Clase = as.factor(Clase),
+    Depto = as.factor(Depto),
+    P6050 = as.factor(P6050),
+    P6090 = as.factor(P6090),
+    P6100 = as.factor(P6100),
+    P6210 = as.factor(P6210),
+    P6240 = as.factor(P6240),
+    Oficio = as.factor(Oficio),
+    P6430 = as.factor(P6430),
+    P6870 = as.factor(P6870),
+    P6920 = as.factor(P6920),
+    P7040 = as.factor(P7040),
+    P7090 = as.factor(P7090),
+    P7495 = as.factor(P7495),
+    P7505 = as.factor(P7505),
+    Pet = as.factor(Pet),
+    Oc = as.factor(Oc),
+    female = as.factor(female)
+  )
+
+# Renombrar variables
+train_personas <- train_personas %>% 
+  rename(cabecera = Clase,
+         edad = P6040,
+         parentesco_jefe = P6050,
+         pension = P6090,
+         regim_salud = P6100,
+         max_educ = P6210,
+         grado_aprob = P6210s1,
+         actividad_ocupada = P6240,
+         antiguedad_empresa = P6426,
+         posicion_empresa = P6430,
+         horas_trabajo = P6800,
+         tamaño_empresa = P6870,
+         cotiza_pension = P6920,
+         otro_trabajo = P7040,
+         horas_extra = P7090,
+         arriendo_o_pension = P7495,
+         ingreso_extra = P7505,
+         ocupado = Oc,
+         factor_exp = Fex_c,
+         factor_ex_dep = Fex_dpto
+  )
 
 ##------Limpieza test_personas------##
 
@@ -185,7 +250,7 @@ test_personas  %>%
 
 # Creamos la variable female
 test_personas <- test_personas %>% 
-  mutate(female = ifelse(P6020 == 0, yes = 1 , no = 0)) %>%
+  mutate(female = ifelse(P6020 == 2, yes = 1 , no = 0)) %>%
   select(-P6020)
 
 # Observar la cantidad de missing values de cada variable
@@ -194,6 +259,18 @@ missing_tab<-data.frame(
   Miss_val=missing_values
 )
 missing_tab
+
+# Calcular el porcentaje de valores faltantes por variable
+missing_percent <- colMeans(is.na(test_personas)) * 100  
+variables_60_NA_test <- names(missing_percent[missing_percent > 60])
+print(variables_60_NA_test)
+
+# Comparar si las variables con las mismas para train y test
+if (identical(sort(variables_60_NA_personas), sort(variables_60_NA_hogares))) {
+  print("Las variables con más del 60% de NA son las mismas en ambas bases.")
+} else {
+  print("Las variables con más del 60% de NA son diferentes entre las bases.")
+}
 
 # Observar los tipos de variable
 tipo_variables <- data.frame(
@@ -204,5 +281,51 @@ print(tipo_variables)
 
 # Eliminar variables con más del 60% de variables como missing values
 missing_percent <- colMeans(is.na(test_personas)) * 100
-df <- test_personas[, missing_percent <= 60]
+test_personas <- test_personas[, missing_percent <= 60]
 
+# Convertir variables categóricas en factores
+test_personas <- test_personas %>%
+  mutate(
+    Clase = as.factor(Clase),
+    Depto = as.factor(Depto),
+    P6050 = as.factor(P6050),
+    P6090 = as.factor(P6090),
+    P6100 = as.factor(P6100),
+    P6210 = as.factor(P6210),
+    P6240 = as.factor(P6240),
+    Oficio = as.factor(Oficio),
+    P6430 = as.factor(P6430),
+    P6870 = as.factor(P6870),
+    P6920 = as.factor(P6920),
+    P7040 = as.factor(P7040),
+    P7090 = as.factor(P7090),
+    P7495 = as.factor(P7495),
+    P7505 = as.factor(P7505),
+    Pet = as.factor(Pet),
+    Oc = as.factor(Oc),
+    female = as.factor(female)
+  )
+
+# Renombrar variables
+test_personas <- test_personas %>% 
+  rename(cabecera = Clase,
+         edad = P6040,
+         parentesco_jefe = P6050,
+         pension = P6090,
+         regim_salud = P6100,
+         max_educ = P6210,
+         grado_aprob = P6210s1,
+         actividad_ocupada = P6240,
+         antiguedad_empresa = P6426,
+         posicion_empresa = P6430,
+         horas_trabajo = P6800,
+         tamaño_empresa = P6870,
+         cotiza_pension = P6920,
+         otro_trabajo = P7040,
+         horas_extra = P7090,
+         arriendo_o_pension = P7495,
+         ingreso_extra = P7505,
+         ocupado = Oc,
+         factor_exp = Fex_c,
+         factor_ex_dep = Fex_dpto
+  )
