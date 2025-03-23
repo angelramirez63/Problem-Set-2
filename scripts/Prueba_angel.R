@@ -106,13 +106,6 @@ train_hogares <- train_hogares %>%
          factor_ex_dep = Fex_dpto
   )
 
-#Utilizamos K-Nearest Neighbour para imputar los missings que quedan
-train_hogares <- kNN(train_hogares)
-"kNN se demora mucho, entonces vale la pena hacer otras aproximaciones a la imputación
-de variables primero y luego llenar las que faltan usando kNN"
-missing_percent2 <- colMeans(is.na(train_hogares)) * 100
-train_hogares <- train_hogares %>% select(!ends_with("_imp"))
-
 #-----------------------------------------------------------------------------#
 
 ##------Limpieza test_hogares------##
@@ -152,12 +145,6 @@ test_hogares <- test_hogares %>%
          factor_exp = Fex_c,
          factor_ex_dep = Fex_dpto
   )
-
-test_hogares <- kNN(test_hogares)
-"kNN se demora mucho, entonces vale la pena hacer otras aproximaciones a la imputación
-de variables primero y luego llenar las que faltan usando kNN"
-missing_percent2 <- colMeans(is.na(test_hogares)) * 100
-test_hogares <- test_hogares %>% select(!ends_with("_imp"))
 
 #-----------------------------------------------------------------------------#
 
@@ -203,7 +190,6 @@ variables_60_NA_train <- names(missing_percent[missing_percent > 60])
 print(variables_60_NA_train)
 
 # Eliminar variables con más del 60% de variables como missing values
-missing_percent <- colMeans(is.na(train_personas)) * 100
 train_personas <- train_personas[, missing_percent <= 60]
 
 # Observar los tipos de variable
@@ -212,29 +198,6 @@ tipo_variables <- data.frame(
   Tipo = sapply(train_personas, class)
 )
 print(tipo_variables)
-
-# Convertir variables categóricas en factores
-train_personas <- train_personas %>%
-  mutate(
-    Clase = as.factor(Clase),
-    Depto = as.factor(Depto),
-    P6050 = as.factor(P6050),
-    P6090 = as.factor(P6090),
-    P6100 = as.factor(P6100),
-    P6210 = as.factor(P6210),
-    P6240 = as.factor(P6240),
-    Oficio = as.factor(Oficio),
-    P6430 = as.factor(P6430),
-    P6870 = as.factor(P6870),
-    P6920 = as.factor(P6920),
-    P7040 = as.factor(P7040),
-    P7090 = as.factor(P7090),
-    P7495 = as.factor(P7495),
-    P7505 = as.factor(P7505),
-    Pet = as.factor(Pet),
-    Oc = as.factor(Oc),
-    female = as.factor(female)
-  )
 
 # Renombrar variables
 train_personas <- train_personas %>% 
@@ -260,12 +223,27 @@ train_personas <- train_personas %>%
          factor_ex_dep = Fex_dpto
   )
 
-#Utilizamos K-Nearest Neighbour para imputar los missings que quedan
-train_personas <- kNN(train_personas)
-"kNN se demora mucho, entonces vale la pena hacer otras aproximaciones a la imputación
-de variables primero y luego llenar las que faltan usando kNN"
-missing_percent2 <- colMeans(is.na(train_personas)) * 100
-train_personas <- train_personas %>% select(!ends_with("_imp"))
+
+train_personas <- train_personas %>%
+  mutate(arriendo_o_pension = ifelse(arriendo_o_pension == 2, 0, arriendo_o_pension),
+         cotiza_pension = ifelse(cotiza_pension %in% c(1, 3), 1, 0),
+         regim_salud = ifelse(regim_salud == 3, 1, 0)
+         )
+
+train_personas <- train_personas %>%
+  group_by(id) %>%
+  summarise(
+    max_educ = sum(max_educ, na.rm = TRUE),
+    grado_aprob = sum(grado_aprob, na.rm = TRUE),
+    antiguedad_empresa = sum(antiguedad_empresa, na.rm = TRUE),
+    horas_trabajo = sum(horas_trabajo, na.rm = TRUE),
+    cotiza_pension = sum(cotiza_pension, na.rm = TRUE),
+    Pet = sum(Pet, na.rm = TRUE),
+    ocupado = sum(ocupado, na.rm = TRUE),
+    female = sum(female, na.rm = TRUE),
+    regim_salud = sum(regim_salud, na.rm = TRUE)
+  )
+
 #-----------------------------------------------------------------------------#
 
 ##------Limpieza test_personas------##
@@ -292,7 +270,7 @@ variables_60_NA_test <- names(missing_percent[missing_percent > 60])
 print(variables_60_NA_test)
 
 # Comparar si las variables con las mismas para train y test
-if (identical(sort(variables_60_NA_personas), sort(variables_60_NA_hogares))) {
+if (identical(sort(variables_60_NA_train), sort(variables_60_NA_test))) {
   print("Las variables con más del 60% de NA son las mismas en ambas bases.")
 } else {
   print("Las variables con más del 60% de NA son diferentes entre las bases.")
@@ -306,31 +284,7 @@ tipo_variables <- data.frame(
 print(tipo_variables)
 
 # Eliminar variables con más del 60% de variables como missing values
-missing_percent <- colMeans(is.na(test_personas)) * 100
 test_personas <- test_personas[, missing_percent <= 60]
-
-# Convertir variables categóricas en factores
-test_personas <- test_personas %>%
-  mutate(
-    Clase = as.factor(Clase),
-    Depto = as.factor(Depto),
-    P6050 = as.factor(P6050),
-    P6090 = as.factor(P6090),
-    P6100 = as.factor(P6100),
-    P6210 = as.factor(P6210),
-    P6240 = as.factor(P6240),
-    Oficio = as.factor(Oficio),
-    P6430 = as.factor(P6430),
-    P6870 = as.factor(P6870),
-    P6920 = as.factor(P6920),
-    P7040 = as.factor(P7040),
-    P7090 = as.factor(P7090),
-    P7495 = as.factor(P7495),
-    P7505 = as.factor(P7505),
-    Pet = as.factor(Pet),
-    Oc = as.factor(Oc),
-    female = as.factor(female)
-  )
 
 # Renombrar variables
 test_personas <- test_personas %>% 
@@ -356,9 +310,37 @@ test_personas <- test_personas %>%
          factor_ex_dep = Fex_dpto
   )
 
-#Utilizamos K-Nearest Neighbour para imputar los missings que quedan
-test_personas <- kNN(test_personas)
-"kNN se demora mucho, entonces vale la pena hacer otras aproximaciones a la imputación
-de variables primero y luego llenar las que faltan usando kNN"
-missing_percent2 <- colMeans(is.na(test_personas)) * 100
-test_personas <- test_personas %>% select(!ends_with("_imp"))
+# 
+test_personas <- test_personas %>%
+  mutate(arriendo_o_pension = ifelse(arriendo_o_pension == 2, 0, arriendo_o_pension),
+         cotiza_pension = ifelse(cotiza_pension %in% c(1, 3), 1, 0),
+         regim_salud = ifelse(regim_salud == 3, 1, 0)
+  )
+
+test_personas <- test_personas %>%
+  group_by(id) %>%
+  summarise(
+    max_educ = sum(max_educ, na.rm = TRUE),
+    grado_aprob = sum(grado_aprob, na.rm = TRUE),
+    antiguedad_empresa = sum(antiguedad_empresa, na.rm = TRUE),
+    horas_trabajo = sum(horas_trabajo, na.rm = TRUE),
+    cotiza_pension = sum(cotiza_pension, na.rm = TRUE),
+    Pet = sum(Pet, na.rm = TRUE),
+    ocupado = sum(ocupado, na.rm = TRUE),
+    female = sum(female, na.rm = TRUE),
+    regim_salud = sum(regim_salud, na.rm = TRUE)
+  )
+
+#-----------------------------------------------------------------------------#
+
+##------Unión de train------##
+
+# Unir dos bases de datos por la variable "id"
+base_train <- left_join(train_hogares, train_personas, by = "id")
+
+#-----------------------------------------------------------------------------#
+
+##------Unión de test------##
+
+# Unir dos bases de datos por la variable "id"
+base_test <- left_join(test_hogares, test_personas, by = "id")
