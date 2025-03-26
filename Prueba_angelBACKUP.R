@@ -107,6 +107,7 @@ stargazer(numeric_vars, type = "text",
           digits = 2, summary.stat = c("mean", "sd", "min", "max", "median"))
 
 
+#Acotar a percentil 97.5 y 2.5
 
 #REVISAR VALORES ATIPICOS Y OTRAS IRREGULARIDADES
 
@@ -270,6 +271,8 @@ missing_tab
 
 table(missing_tab$Miss_val)
 
+#VER SI ESAS VARIABLES CON MISMO NUMERO DE MISSINGS TIENEN OBS QUE TIENEN ALGO EN COMUN
+
 #Hay un montón de variables con el mismo número de missings. Vamos a ver cuáles no:
 
 missing_tab <- data.frame(
@@ -346,8 +349,8 @@ table(train_full$Pobre, train_full$Pet) #OJO: Acá todos están en edad de traba
 train_full$Pet[is.na(train_full$Pet)] <- ifelse(
   (train_full$cabecera == 1 & train_full$P6040 >= 12) |
     (train_full$cabecera == 2 & train_full$P6040 >= 10),
-  1, 0
-) #Este código se asegura que hicimos el procedimiento correctamente.
+  1, 0)
+#Este código se asegura que hicimos el procedimiento correctamente.
 
 
 #Oc - Ocupado sí == 1. Fíjese que el montón de missing values es porque no hay una variable propia de desocupados. En ese caso, tendríamos que asumir que todos los valores faltantes corresponden a gente desocupada. Es un gran supuesto.
