@@ -53,6 +53,9 @@ table(train_hogares$Pobre,train_hogares$Pobre_hand)
 train_hogares<- train_hogares %>% mutate(Pobre_hand_2=ifelse(Ingtotugarr<Lp*Npersug,1,0))
 table(train_hogares$Pobre,train_hogares$Pobre_hand_2)
 
+train_hogares <- train_hogares %>%
+  select(-Pobre_hand, -Pobre_hand_2)
+
 # Dejar las mismas variables que test
 train_hogares <- train_hogares %>%
   select(-Ingtotug, -Ingtotugarr, 
@@ -224,12 +227,14 @@ train_personas <- train_personas %>%
   )
 
 
+# Reconstruir variables
 train_personas <- train_personas %>%
   mutate(arriendo_o_pension = ifelse(arriendo_o_pension == 2, 0, arriendo_o_pension),
-         cotiza_pension = ifelse(cotiza_pension %in% c(1, 3), 1, 0),
-         regim_salud = ifelse(regim_salud == 3, 1, 0)
+         cotiza_pension = ifelse(cotiza_pension %in% c(1, 3), 1, 0), # 1 si cotiza o es pensionado
+         regim_salud = ifelse(regim_salud == 3, 1, 0) # 1 si es subsidiado
          )
 
+# Agrupar poe hogar
 train_personas <- train_personas %>%
   group_by(id) %>%
   summarise(
@@ -310,11 +315,11 @@ test_personas <- test_personas %>%
          factor_ex_dep = Fex_dpto
   )
 
-# 
+# Reconstruir variables
 test_personas <- test_personas %>%
   mutate(arriendo_o_pension = ifelse(arriendo_o_pension == 2, 0, arriendo_o_pension),
-         cotiza_pension = ifelse(cotiza_pension %in% c(1, 3), 1, 0),
-         regim_salud = ifelse(regim_salud == 3, 1, 0)
+         cotiza_pension = ifelse(cotiza_pension %in% c(1, 3), 1, 0), # 1 si cotiza o es pensionado
+         regim_salud = ifelse(regim_salud == 3, 1, 0) # 1 si es subsidiado
   )
 
 test_personas <- test_personas %>%
