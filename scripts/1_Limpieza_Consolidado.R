@@ -21,8 +21,9 @@ p_load(tidyverse,
 
 # Crear el directorio 
 wd <- here()
-setwd(wd)
-rm(wd)
+wd_stores <- paste0(wd, "/stores/")
+setwd(wd_stores)
+rm(wd_stores)
 
 ## Cargar datos ----------------------------------------------------------------
 
@@ -132,7 +133,7 @@ hogares_total <- hogares_total %>%
 
 # Dejar las mísmas variables que la base test personas
 train_personas <- train_personas %>%
-  select(-Estrato1, -P6500, -P6510s1, -P6510s2, -P6545s1, -P6545s2, -P6580s1, -P6580s2, 
+  dplyr::select(-Estrato1, -P6500, -P6510s1, -P6510s2, -P6545s1, -P6545s2, -P6580s1, -P6580s2, 
          -P6585s1a1, -P6585s1a2, -P6585s2a1, -P6585s2a2, -P6585s3a1, -P6585s3a2, -P6585s4a1, -P6585s4a2, 
          -P6590s1, -P6600s1, -P6610s1, -P6620s1, -P6630s1a1, -P6630s2a1, -P6630s3a1, -P6630s4a1, 
          -P6630s6a1, -P6750, -P6760, -P550, -P7070, -P7140s1, -P7140s2, -P7422s1, -P7472s1, 
@@ -205,6 +206,7 @@ personas_total$P6510 <- ifelse((personas_total$Oc == 0 |
                                   !personas_total$P6430 %in% c(1, 2, 3, 8)) & 
                                  is.na(personas_total$P6510), 
                                2, personas_total$P6510) #2 es no en esta variable
+
 
 #La confició & !personas_total$P6430 %in% c(1, 2, 3, 8) se debe a que las preguntas 
 #sobre componentes salariales solo se hacen a personas que son empleados remunerados
@@ -288,9 +290,49 @@ missing_cols <- colSums(is.na(personas_total)) > threshold
 
 print(names(personas_total)[missing_cols]) #Las variables con más de 60% de missings son P5100 y P5140
 
-personas_total <- personas_total[, !missing_cols] # Eliminamos variables con más de 60% en missing values
+#Renombrar variables // 
 
-colSums(is.na(personas_total)) #Note que las variables con más de 60% de missings fueron removidas.
+personas_total <- personas_total %>% 
+  rename(dicotom_ingxhorasextra = P6510,
+         dicotom_primas = P6545,
+         dicotom_bonificaciones = P6580,
+         dicotom_subsalimentacion = P6585s1,
+         dicotom_substransporte = P6585s2,
+         dicotom_subsfamiliar = P6585s3,
+         dicotom_subseduc = P6585s4,
+         dicotom_alimentosextra = P6590,
+         dicotom_viviendapago = P6600,
+         dicotom_transporteempresa = P6610,
+         dicotom_ingresosextraespecie = P6620,
+  )
+
+#Ver qué valor toman estas variables dicotómicas
+
+summary(personas_total[, c("dicotom_ingxhorasextra", "dicotom_primas", "dicotom_bonificaciones", 
+                           "dicotom_subsalimentacion", "dicotom_substransporte", "dicotom_subsfamiliar", "dicotom_subseduc", 
+                           "dicotom_alimentosextra", "dicotom_viviendapago", "dicotom_transporteempresa", 
+                           "dicotom_ingresosextraespecie")])
+
+
+#Convertir en valores 1 y 0 para servir de contador estandarizado.
+
+personas_total <- personas_total %>% 
+  mutate(
+    dicotom_ingxhorasextra = ifelse(dicotom_ingxhorasextra == 1, 1, 0),
+    dicotom_primas = ifelse(dicotom_primas == 1, 1, 0),
+    dicotom_bonificaciones = ifelse(dicotom_bonificaciones == 1, 1, 0),
+    dicotom_subsalimentacion = ifelse(dicotom_subsalimentacion == 1, 1, 0),
+    dicotom_substransporte = ifelse(dicotom_substransporte == 1, 1, 0),
+    dicotom_subsfamiliar = ifelse(dicotom_subsfamiliar == 1, 1, 0),
+    dicotom_subseduc = ifelse(dicotom_subseduc == 1, 1, 0),
+    dicotom_alimentosextra = ifelse(dicotom_alimentosextra == 1, 1, 0),
+    dicotom_viviendapago = ifelse(dicotom_viviendapago == 1, 1, 0),
+    dicotom_transporteempresa = ifelse(dicotom_transporteempresa == 1, 1, 0),
+    dicotom_ingresosextraespecie = ifelse(dicotom_ingresosextraespecie == 1, 1, 0)
+  )
+
+
+
 
 
 
