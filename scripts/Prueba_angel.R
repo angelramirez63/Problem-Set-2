@@ -349,3 +349,65 @@ base_train <- left_join(train_hogares, train_personas, by = "id")
 
 # Unir dos bases de datos por la variable "id"
 base_test <- left_join(test_hogares, test_personas, by = "id")
+
+#-----------------------------------------------------------------------------#
+
+##------ Última limpieza ------##
+
+### Variables no interpretables en agrupación
+db <- db %>% select(-P6050, # Parentesco con el jefe
+                    -P6210s1, # Se puede reemplazar con P6210 en la agrupación
+                    -P6240, # Actividad semana pasada, toca transformar para conteo y es poco relevante
+                    -Oficio, # 99 categorias
+                    -P6430, # Posición en la empresa, muchas categporias
+                    )
+
+### Renombrar
+db <- db %>% 
+  rename(mujer = P6020,
+         edad = P6040,
+         segur_social = P6090, # Si es cotizante o no
+         tipos_segur_social = P6100,
+         max_nivel_educ = P6210,
+         tiempo_empresa = P6426
+  )
+
+### Reconstruir
+
+# Creamos la variable mujer
+db <- db %>% 
+  mutate(mujer = ifelse(mujer == 2, yes = 1 , no = 0))
+
+# Usamos edad
+db <- db %>%
+  mutate(
+    menor_15 = ifelse(edad < 15, 1, 0),  # 1 si es menor de 15, 0 en caso contrario
+    mayor_60 = ifelse(edad > 60, 1, 0)   # 1 si es mayor de 60, 0 en caso contrario
+  )
+
+# seguridad social
+db <- db %>% 
+  mutate(segur_social = ifelse(segur_social == 1, yes = 1 , no = 0)) # 1 si cotiza
+
+# Tipo de seguridad social
+db <- db %>% 
+  mutate(segur_subsidiado = ifelse(tipos_segur_social == 3, yes = 1, no = 0)) # 1 si es subsidiado
+
+# Maximo nivel de educación
+db <- db %>% 
+  mutate(educ_sup = ifelse(max_nivel_educ == 6, yes = 1, no = 0)) # 1 si es universitario
+
+### Agrupar
+db <- db %>%
+  group_by(id) %>%
+  summarise(
+    mujer = sum(mujer, na.rm = TRUE),
+    menor_15 = sum(menor_15, na.rm = TRUE),
+    mayor_60 = sum(mayor_60, na.rm = TRUE),
+    edad = mean(edad, na.rm = TRUE),
+    segur_social = sum(segur_social, na.rm = TRUE), # Necesita imputación
+    segur_subsidiado = sum(segur_subsidiado, na.rm = TRUE), # Necesita imputación
+    educ_sup = sum(educ_sup, na.rm = TRUE), # Necesita imputación
+    tiempo_empresa = mean(tiempo_empresa, na.rm = TRUE),
+    
+  )
