@@ -115,7 +115,7 @@ ggplot(missings, aes(x = reorder(skim_variable, +complete_rate) , y =  complete_
 
 #Remover variables que tiene el menos del 0.25 de complete rate o menos: 
 #son 86 variables que cumplen esta condición 
-missings_75 <- missings %>% 
+missings_25 <- missings %>% 
                filter(complete_rate <= 0.25)
 
 #Las variables que se van a remover son las que están en missings_75
