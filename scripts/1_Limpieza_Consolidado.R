@@ -39,7 +39,7 @@ train_hogares <- read.csv("train_hogares.csv") %>%
 test_personas <- read.csv("test_personas.csv") %>% 
   as_tibble()
 
-train_personas <- read.csv("train_personas.csv") %>% 
+train_personas <- readRDS("train_personas.rds") %>% 
   as_tibble() #Por el peso del archivo se convirtió a rds
 
 ## Limpeza hogares -------------------------------------------------------------
@@ -332,7 +332,123 @@ personas_total <- personas_total %>%
   )
 
 
+# ====================== Dejar variables a nivel de hogar ======================
+
+
+#Juan Esteban ------------------------------------------------------------------
+
+
+#1) Lista de variables ---------------------------------------------------------
+
+#P6630s1 - en los últimos 12 meses recibió prima de servicios (prima_servicios) / (C) 1
+#P6630s2 - en los últimso 12 meses recibió prima de navidad (prima_navidad) / (C) 1     
+#P6630s3 - en los últimos 12 meses recibió prima de vacaciones (prima_vacaciones) / (C) 1     
+#P6630s4 - en los últimos 12 meses recibió viáticos permanentes (viaticos) / (C) 1      
+#P6630s6 - en los últimos 12 meses recibió bonificaciones anuales (bonificaciones_anuales) / (C)  1    
+#P6800 - horas trabajadas normalmente en el empleo principal (horas_empleo_principal) / (N) 2      
+#P6870 - número de personas en la empresa donde trabaja (numero_personas_empresa) / (C) 3        
+#P6920 -  cotiza actualmente a un fondo de pensiones (cotiza_pension) / (C) 1     
+#P7040 - tiene una ocupación secundaria como un trabajo o negocio (empleo_secundaria) / (C) 1        
+#P7045 - trabajo en la ocupación secundaria (horas_empleo_secundario) / 2         
+#P7090 -  quiere trabajar más horas ademas de las que ya trabaja (quiere_trabajar_mas) / (C) 1
 
 
 
+#2) Imputar missings variables P7090 (quiere trabajar más horas) ---------------
+#Si la personas no quiere traabajar por transitividad tampoco quiere trabajar mas ahora.
+#ademas si la peronas está desocupada tampaco puede trabajar ahoras adicionales a las
+#que trabajan porque no trabajan 
+
+personas_total  <- personas_total %>% 
+                    mutate(P7090 = ifelse(is.na(P7090), 2, P7090))
+
+
+#3) Crear variables pensionado -------------------------------------------------
+#Creamos una variable dummy para las personas ya pensionadas y dejamos la variale 
+#P6920 como cotiza pensión
+
+personas_total <- personas_total %>% 
+                  mutate(
+                    pensionado = ifelse(P6920 == 1 | P6920 == 2, 0, P6920), #Crear variables pensionado igual a 0 para cotizantes y no contizantes que no están pensionados
+                    pensionado = ifelse(P6920 == 3, 1, pensionado), #Ponerle 1 a las personas pensionadas
+                    P6920 = ifelse((P6920 == 2 | P6920 == 3 )  & !is.na(P6920), 2 , P6920) #Volver la variables P6920 una dummy de cotiza pensión
+                  )
+
+
+#4) Crear variables por tamaño de empresa --------------------------------------
+
+personas_total <- personas_total %>%  
+                  mutate(
+                    trabaja_solo = ifelse(P6870 == 1, 1, 0), #Trabaja solo 
+                    microempresa = ifelse(P6870 == 2 | P6870 == 3 | P6870 == 4, 1, 0), #De 2 a 10 trabajadores en la empresa
+                    pequeña_empresa = ifelse(P6870 == 5 | P6870 == 6, 1, 0),  # De 11 a 30 trabajadores en la empresa
+                    mediana_empresa = ifelse(P6870 == 7 | P6870 == 8, 1, 0), # De 31 a 100 trabajadores
+                    gran_empresa = ifelse(P6870 == 9, 1, 0) # 101 o más trabajadores
+                  )
+
+
+#5) Recodificar variables binarias  --------------------------------------------
+#La codificación del DANE es (si == 1) y (no == 2) y la quiero dejar en 
+# (si == 1) y (no == 0) para que se pueda interpretar como una proporción
+
+personas_total <- personas_total %>% 
+                  mutate(
+                    P6630s1 = ifelse(P6630s1 == 1, 1, 0),
+                    P6630s2 = ifelse(P6630s2 == 1, 1, 0), 
+                    P6630s3 = ifelse(P6630s3 == 1, 1, 0), 
+                    P6630s4 = ifelse(P6630s4 == 1, 1, 0), 
+                    P6630s6 = ifelse(P6630s6 == 1, 1, 0), 
+                    P6920 = ifelse(P6920 == 2 & !is.na(P6920), 0 , P6920),
+                    P7040 = ifelse(P7040 == 1, 1, 0), 
+                    P7090 = ifelse(P7090 == 1, 1, 0)
+                    )
+
+#6) Dejar variables a nivel de hogar -------------------------------------------
+
+
+#(i) para las varibles categoricas que tiene (1 == si) y (0 == no) hacemos un promedio 
+# de estas respuestas que se interpretan como la proporción de personas en el hofar que reciben 
+#primar o a lo que la variable haga referencias
+
+#si el promedio del hogar es:  
+#                            1 todos reciben 
+#                            1>promedio>0.5 más de la mitad de las personas lo reciben 
+#                            0.5 la mitad de las personas lo reciben 
+#                            0.5>promedio>0 menos de la mitad de las personas lo reciben 
+#                            0 nadie los recibe 
+
+
+personas_total <- personas_total %>% 
+                    rename(
+                      prima_servicios = P6630s1,
+                      prima_navidad = P6630s2 , 
+                      prima_vacaciones = P6630s3, 
+                      viaticos = P6630s4,
+                      bonificaciones_anuales = P6630s6, 
+                      horas_empleo_principal = P6800, 
+                      numero_personas_empresa = P6870, 
+                      cotiza_pension = P6920, 
+                      empleo_secundario = P7040, 
+                      horas_empleo_secundario = P7045,
+                      quiere_trabajar_mas = P7090
+                      ) %>% 
+                      group_by(id) %>% 
+                      summarise(
+                        tamaño_hogar = n(), 
+                        prima_servicios = mean(prima_servicios), #Proporción de personas que reciben la prima en el hogar 
+                        prima_navidad = mean(prima_navidad), #Proporción de personas que reciben la prima en el hogar 
+                        prima_vacaciones = mean(prima_vacaciones), #Proporción de personas que reciben la prima en el hogar 
+                        bonificaciones_anuales = mean(bonificaciones_anuales), #Proporción de personas que reciben la bonificación en el hogar 
+                        horas_empleo_principal = mean(horas_empleo_principal), #Promedio de horas que trabajan los miembros del hogar
+                        cotiza_pension = mean(cotiza_pension), #Proporción de personas que reciben cotizan pensión en el hogar 
+                        empleo_secundario = mean(empleo_secundario), #Proporción de personas con un empleo secundario en el hogar
+                        horas_empleo_secundario = mean(horas_empleo_secundario), #Promedio de horas que trabajan los miembros del hogar
+                        quiere_trabajar_mas = mean(quiere_trabajar_mas), #Proporción de personas que quieren trabajar más en el hogar 
+                        pensionado = mean(pensionado), #Proporción de personas pensionadas en el hogar 
+                        trabaja_solo = mean(trabaja_solo), #Proporción de personas que trabajan solas en el hogar
+                        microempresa = mean(microempresa), #Proporción de personas que trabajan en una microempresa en el hogar (2-10 trabajadores)
+                        pequeña_empresa = mean(pequeña_empresa), #Proporción de personas que trabajan en una pequeña empresa en el hogar (11-30 trabajadores)
+                        mediana_empresa = mean(mediana_empresa), #Proporción de personas que trabajan en una mediana empresa en el hogar (31-100 trabajadores)
+                        gran_empresa = mean(gran_empresa) #Proporción de personas que trabajan en una gran empresa en el hogar (101+ trabajadores)
+                      )
 
