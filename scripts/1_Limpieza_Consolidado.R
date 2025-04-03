@@ -293,6 +293,52 @@ print(names(personas_total)[missing_cols]) #Las variables con más de 60% de mis
 
 # ====================== Dejar variables a nivel de hogar ======================
 
+#Juan Pablo --------------------------------------------------------------------
+
+# Juan Pablo -------------------------------------------------------------------
+
+#Renombrar variables // 
+
+personas_total <- personas_total %>% 
+  rename(dicotom_ingxhorasextra = P6510,
+         dicotom_primas = P6545,
+         dicotom_bonificaciones = P6580,
+         dicotom_subsalimentacion = P6585s1,
+         dicotom_substransporte = P6585s2,
+         dicotom_subsfamiliar = P6585s3,
+         dicotom_subseduc = P6585s4,
+         dicotom_alimentosextra = P6590,
+         dicotom_viviendapago = P6600,
+         dicotom_transporteempresa = P6610,
+         dicotom_ingresosextraespecie = P6620,
+  )
+
+#Ver qué valor toman estas variables dicotómicas
+
+summary(personas_total[, c("dicotom_ingxhorasextra", "dicotom_primas", "dicotom_bonificaciones", 
+                           "dicotom_subsalimentacion", "dicotom_substransporte", "dicotom_subsfamiliar", "dicotom_subseduc", 
+                           "dicotom_alimentosextra", "dicotom_viviendapago", "dicotom_transporteempresa", 
+                           "dicotom_ingresosextraespecie")])
+
+
+#Convertir en valores 1 y 0 para servir de contador estandarizado.
+
+personas_total <- personas_total %>% 
+  mutate(
+    dicotom_ingxhorasextra = ifelse(dicotom_ingxhorasextra == 1, 1, 0),
+    dicotom_primas = ifelse(dicotom_primas == 1, 1, 0),
+    dicotom_bonificaciones = ifelse(dicotom_bonificaciones == 1, 1, 0),
+    dicotom_subsalimentacion = ifelse(dicotom_subsalimentacion == 1, 1, 0),
+    dicotom_substransporte = ifelse(dicotom_substransporte == 1, 1, 0),
+    dicotom_subsfamiliar = ifelse(dicotom_subsfamiliar == 1, 1, 0),
+    dicotom_subseduc = ifelse(dicotom_subseduc == 1, 1, 0),
+    dicotom_alimentosextra = ifelse(dicotom_alimentosextra == 1, 1, 0),
+    dicotom_viviendapago = ifelse(dicotom_viviendapago == 1, 1, 0),
+    dicotom_transporteempresa = ifelse(dicotom_transporteempresa == 1, 1, 0),
+    dicotom_ingresosextraespecie = ifelse(dicotom_ingresosextraespecie == 1, 1, 0)
+  )
+
+
 
 #Juan Esteban ------------------------------------------------------------------
 
@@ -409,68 +455,19 @@ personas_total <- personas_total %>%
                         microempresa = mean(microempresa), #Proporción de personas que trabajan en una microempresa en el hogar (2-10 trabajadores)
                         pequeña_empresa = mean(pequeña_empresa), #Proporción de personas que trabajan en una pequeña empresa en el hogar (11-30 trabajadores)
                         mediana_empresa = mean(mediana_empresa), #Proporción de personas que trabajan en una mediana empresa en el hogar (31-100 trabajadores)
-                        gran_empresa = mean(gran_empresa) #Proporción de personas que trabajan en una gran empresa en el hogar (101+ trabajadores)
+                        gran_empresa = mean(gran_empresa), #Proporción de personas que trabajan en una gran empresa en el hogar (101+ trabajadores)
+                        dicotom_ingxhorasextra = mean(dicotom_ingxhorasextra),
+                        dicotom_primas = mean(dicotom_primas),
+                        dicotom_bonificaciones = mean(dicotom_bonificaciones),
+                        dicotom_subsalimentacion = mean(dicotom_subsalimentacion),
+                        dicotom_substransporte = mean(dicotom_substransporte),
+                        dicotom_subsfamiliar = mean(dicotom_subsfamiliar),
+                        dicotom_subseduc = mean(dicotom_subseduc),
+                        dicotom_alimentosextra = mean(dicotom_alimentosextra),
+                        dicotom_viviendapago = mean(dicotom_viviendapago),
+                        dicotom_transporteempresa = mean(dicotom_transporteempresa),
+                        dicotom_ingresosextraespecie = mean(dicotom_ingresosextraespecie)
                       )
 
-# Juan Pablo -------------------------------------------------------------------
-
-#Renombrar variables // 
-
-personas_total <- personas_total %>% 
-  rename(dicotom_ingxhorasextra = P6510,
-         dicotom_primas = P6545,
-         dicotom_bonificaciones = P6580,
-         dicotom_subsalimentacion = P6585s1,
-         dicotom_substransporte = P6585s2,
-         dicotom_subsfamiliar = P6585s3,
-         dicotom_subseduc = P6585s4,
-         dicotom_alimentosextra = P6590,
-         dicotom_viviendapago = P6600,
-         dicotom_transporteempresa = P6610,
-         dicotom_ingresosextraespecie = P6620,
-  )
-
-#Ver qué valor toman estas variables dicotómicas
-
-summary(personas_total[, c("dicotom_ingxhorasextra", "dicotom_primas", "dicotom_bonificaciones", 
-                           "dicotom_subsalimentacion", "dicotom_substransporte", "dicotom_subsfamiliar", "dicotom_subseduc", 
-                           "dicotom_alimentosextra", "dicotom_viviendapago", "dicotom_transporteempresa", 
-                           "dicotom_ingresosextraespecie")])
-
-
-#Convertir en valores 1 y 0 para servir de contador estandarizado.
-
-personas_total <- personas_total %>% 
-  mutate(
-    dicotom_ingxhorasextra = ifelse(dicotom_ingxhorasextra == 1, 1, 0),
-    dicotom_primas = ifelse(dicotom_primas == 1, 1, 0),
-    dicotom_bonificaciones = ifelse(dicotom_bonificaciones == 1, 1, 0),
-    dicotom_subsalimentacion = ifelse(dicotom_subsalimentacion == 1, 1, 0),
-    dicotom_substransporte = ifelse(dicotom_substransporte == 1, 1, 0),
-    dicotom_subsfamiliar = ifelse(dicotom_subsfamiliar == 1, 1, 0),
-    dicotom_subseduc = ifelse(dicotom_subseduc == 1, 1, 0),
-    dicotom_alimentosextra = ifelse(dicotom_alimentosextra == 1, 1, 0),
-    dicotom_viviendapago = ifelse(dicotom_viviendapago == 1, 1, 0),
-    dicotom_transporteempresa = ifelse(dicotom_transporteempresa == 1, 1, 0),
-    dicotom_ingresosextraespecie = ifelse(dicotom_ingresosextraespecie == 1, 1, 0)
-  )
-
-#Realizar agrupación a nivel hogar
-
-personas_total <- personas_total %>% 
-  group_by(id) %>% 
-  summarise(
-    dicotom_ingxhorasextra = mean(dicotom_ingxhorasextra),
-    dicotom_primas = mean(dicotom_primas),
-    dicotom_bonificaciones = mean(dicotom_bonificaciones),
-    dicotom_subsalimentacion = mean(dicotom_subsalimentacion),
-    dicotom_substransporte = mean(dicotom_substransporte),
-    dicotom_subsfamiliar = mean(dicotom_subsfamiliar),
-    dicotom_subseduc = mean(dicotom_subseduc),
-    dicotom_alimentosextra = mean(dicotom_alimentosextra),
-    dicotom_viviendapago = mean(dicotom_viviendapago),
-    dicotom_transporteempresa = mean(dicotom_transporteempresa),
-    dicotom_ingresosextraespecie = mean(dicotom_ingresosextraespecie)
-  )
 
 
