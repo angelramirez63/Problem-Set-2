@@ -293,8 +293,6 @@ print(names(personas_total)[missing_cols]) #Las variables con más de 60% de mis
 
 # ====================== Dejar variables a nivel de hogar ======================
 
-#Juan Pablo --------------------------------------------------------------------
-
 # Juan Pablo -------------------------------------------------------------------
 
 #Renombrar variables // 
