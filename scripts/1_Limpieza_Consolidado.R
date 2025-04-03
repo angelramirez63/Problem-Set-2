@@ -16,7 +16,8 @@ p_load(tidyverse,
        MLmetrics, # Calcular metricas
        MLeval,    # Evaluar modelos de clasificación
        Metrics, 
-       ggplot2
+       ggplot2, 
+       rio
 )
 
 # Crear el directorio 
@@ -527,4 +528,6 @@ personas_total <- personas_total %>%
 
 
 train_full <- left_join(hogares_total, personas_total, by = "id")
-export()
+export(train_full,'stores/train_full.rds' )
+
+
