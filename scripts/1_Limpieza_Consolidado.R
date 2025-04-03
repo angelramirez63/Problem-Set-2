@@ -489,7 +489,6 @@ personas_total <- personas_total %>%
                       ) %>% 
                       group_by(id) %>% 
                       summarise(
-                        tamaño_hogar = n(), 
                         prima_servicios = mean(prima_servicios), #Proporción de personas que reciben la prima en el hogar 
                         prima_navidad = mean(prima_navidad), #Proporción de personas que reciben la prima en el hogar 
                         prima_vacaciones = mean(prima_vacaciones), #Proporción de personas que reciben la prima en el hogar 
@@ -527,7 +526,7 @@ personas_total <- personas_total %>%
                       )
 
 
-train_full <- left_join(hogares_total, personas_total, by = "id")
-export(train_full,'stores/train_full.rds' )
+db_final <- left_join(hogares_total, personas_total, by = "id")
+export(db_final,'stores/db_final.rds' )
 
 
