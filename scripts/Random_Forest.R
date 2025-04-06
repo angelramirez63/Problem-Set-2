@@ -87,7 +87,7 @@ fiveStats <- function(...) {
 }
 
 ctrl<- trainControl(method = "cv",
-                    number = 10,
+                    number = 5,
                     summaryFunction = fiveStats,
                     classProbs = TRUE,
                     verbose=FALSE,
