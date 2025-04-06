@@ -100,6 +100,10 @@ aucval_rf
 
 #Random Forest 2 ---------------------------------------------------------------
 
+library(doParallel)
+cl <- makeCluster(parallel::detectCores() - 1)
+registerDoParallel(cl)
+
 
 trainRF$Pobre <- factor(trainRF$Pobre,
                         levels = c(0, 1),
@@ -142,7 +146,7 @@ cv_RForest <- train(Pobre ~ cabecera + Dominio + Ncuartos + Ncuartos_duermen + p
                       dicotom_transporteempresa + dicotom_ingresosextraespecie + mujer + 
                       menor_15 + mayor_60 + edad + segur_social + segur_subsidiado + 
                       educ_sup + tiempo_empresa, 
-                    data = trainRF[,-1], 
+                    data = trainRF, 
                     method = "ranger", # llamamos el paquete del metodo a utilizar
                     trControl = ctrl,
                     metric="F1", # metrica a optimizar
@@ -154,19 +158,15 @@ cv_RForest <- train(Pobre ~ cabecera + Dominio + Ncuartos + Ncuartos_duermen + p
 cv_RForest
 
 
-# Realizar predicciones
-predicciones <- predict(rf, data = db_test)$predictions
+# Predicciones
+predicciones <- predict(cv_RForest, newdata = db_test)
 
-# Crear un dataframe con el id y las predicciones
+# Resultados
 resultados <- data.frame(
   id = test$id,
   prediccion = predicciones
 )
 
-# Ver las primeras filas
-head(resultados)
-
 write.csv(resultados, "predicciones_por_id.csv", row.names = FALSE)
 
-
-
+stopCluster(cl)
