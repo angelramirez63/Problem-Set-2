@@ -98,6 +98,75 @@ aucval_rf
 
 
 
+#Random Forest 2 ---------------------------------------------------------------
+
+
+trainRF$Pobre <- factor(trainRF$Pobre,
+                        levels = c(0, 1),
+                        labels = c("NoPobre", "Pobre"))
+
+
+fiveStats <- function(...) {
+  c(
+    caret::twoClassSummary(...), # Returns ROC, Sensitivity, and Specificity
+    caret::defaultSummary(...)  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
+  )
+}
+
+ctrl<- trainControl(method = "cv",
+                    number = 10,
+                    summaryFunction = fiveStats,
+                    classProbs = TRUE,
+                    verbose=FALSE,
+                    savePredictions = T)
+
+
+mtry_grid<-expand.grid(mtry = 8:51, # 51 incluye bagging
+                       min.node.size= c(1, 5, 10, 50, 100, 200, 300, 500, 1000), #controla la complejidad del arbol
+                       splitrule= 'gini') # tomamos gini como splitrule 
+mtry_grid
+
+
+
+cv_RForest <- train(Pobre ~ cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda + 
+                      credit_vivienda_mes + arriendo_hipotetico + arriendo + Npersonas + 
+                      Nper_unidad_gasto + linea_indigencia + linea_pobreza + factor_exp + Depto + 
+                      factor_ex_dep  + tamaño_hogar + prima_servicios + 
+                      prima_navidad + prima_vacaciones + bonificaciones_anuales + 
+                      horas_empleo_principal + cotiza_pension + empleo_secundario + 
+                      horas_empleo_secundario + quiere_trabajar_mas + pensionado + trabaja_solo + 
+                      microempresa + pequeña_empresa + mediana_empresa + gran_empresa + 
+                      dicotom_ingxhorasextra + dicotom_primas + dicotom_bonificaciones + 
+                      dicotom_subsalimentacion + dicotom_substransporte + dicotom_subsfamiliar + 
+                      dicotom_subseduc + dicotom_alimentosextra + dicotom_viviendapago + 
+                      dicotom_transporteempresa + dicotom_ingresosextraespecie + mujer + 
+                      menor_15 + mayor_60 + edad + segur_social + segur_subsidiado + 
+                      educ_sup + tiempo_empresa, 
+                    data = trainRF[,-1], 
+                    method = "ranger", # llamamos el paquete del metodo a utilizar
+                    trControl = ctrl,
+                    metric="F1", # metrica a optimizar
+                    tuneGrid = mtry_grid,
+                    ntree=500,
+                    na.action = na.pass
+                    )
+
+cv_RForest
+
+
+# Realizar predicciones
+predicciones <- predict(rf, data = db_test)$predictions
+
+# Crear un dataframe con el id y las predicciones
+resultados <- data.frame(
+  id = test$id,
+  prediccion = predicciones
+)
+
+# Ver las primeras filas
+head(resultados)
+
+write.csv(resultados, "predicciones_por_id.csv", row.names = FALSE)
 
 
 
