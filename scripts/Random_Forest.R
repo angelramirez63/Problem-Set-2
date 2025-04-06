@@ -1,4 +1,23 @@
 #Random Forest  ----------------------------------------------------------------
+rm(list = ls())
+
+if(!require(pacman)) install.packages("pacman") ; require(pacman)
+
+
+p_load(tidyverse,
+       here,
+       skimr,
+       VIM,
+       glmnet,    # Modelos de regresión regularizados (EN, Lasso y Ridge).
+       caret,
+       MLmetrics, # Calcular metricas
+       MLeval,    # Evaluar modelos de clasificación
+       Metrics, 
+       ggplot2,
+       dplyr,
+       ranger,
+       rio
+)
 
 ## Ángel y Juan Pablo
 
@@ -51,59 +70,9 @@ fitControl <- trainControl(method = 'cv', number = 10)
 
 #Ideas: Usar prop o conteo
 
-#MODELO ------------------------------------------------------------------------
-
-set.seed(1112) #Se fija semilla para reproducibilidad
-
-rf<- ranger::ranger(
-  Pobre ~ cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda + 
-    credit_vivienda_mes + arriendo_hipotetico + arriendo + Npersonas + 
-    Nper_unidad_gasto + linea_indigencia + linea_pobreza + factor_exp + Depto + 
-    factor_ex_dep  + tamaño_hogar + prima_servicios + 
-    prima_navidad + prima_vacaciones + bonificaciones_anuales + 
-    horas_empleo_principal + cotiza_pension + empleo_secundario + 
-    horas_empleo_secundario + quiere_trabajar_mas + pensionado + trabaja_solo + 
-    microempresa + pequeña_empresa + mediana_empresa + gran_empresa + 
-    dicotom_ingxhorasextra + dicotom_primas + dicotom_bonificaciones + 
-    dicotom_subsalimentacion + dicotom_substransporte + dicotom_subsfamiliar + 
-    dicotom_subseduc + dicotom_alimentosextra + dicotom_viviendapago + 
-    dicotom_transporteempresa + dicotom_ingresosextraespecie + mujer + 
-    menor_15 + mayor_60 + edad + segur_social + segur_subsidiado + 
-    educ_sup + tiempo_empresa, 
-  data = trainRF,
-  method = 'ranger',
-  trainControl = fitControl,
-  tuneGrid = expand.grid(
-    num.trees = seq(300, 1000, by = 100),   # 300, 400, ..., 800
-    mtry = 8:20,  
-    splitrule = "gini", 
-    min.node.size = c(1, 5, 10, 50, 100, 200, 300, 500, 1000)
-  )
-)
-rf
-
-# Calculamos las predicciones
-Pobre_hat <-predict(rf, data = testRF, predict.all = TRUE)$predictions
-pred.rf <- as.data.frame(Pobre_hat)
-
-# Calcular las probabilidades de Default 
-ntrees <- ncol( pred.rf ) 
-phat.rf <- rowSums(pred.rf == 2) / ntrees
-
-aucval_rf <- Metrics::auc(
-  actual = Pobre_num[-inTrain],
-  predicted = phat.rf
-)
-aucval_rf
-
-
-
 #Random Forest 2 ---------------------------------------------------------------
 
-library(doParallel)
-cl <- makeCluster(parallel::detectCores() - 1)
-registerDoParallel(cl)
-
+set.seed(1112) #Se fija semilla para reproducibilidad
 
 trainRF$Pobre <- factor(trainRF$Pobre,
                         levels = c(0, 1),
@@ -125,7 +94,7 @@ ctrl<- trainControl(method = "cv",
                     savePredictions = T)
 
 
-mtry_grid<-expand.grid(mtry = 8:51, # 51 incluye bagging
+mtry_grid<-expand.grid(mtry = c(8, 16, 32, 48, 51), # 51 incluye bagging
                        min.node.size= c(1, 5, 10, 50, 100, 200, 300, 500, 1000), #controla la complejidad del arbol
                        splitrule= 'gini') # tomamos gini como splitrule 
 mtry_grid
@@ -159,14 +128,12 @@ cv_RForest
 
 
 # Predicciones
-predicciones <- predict(cv_RForest, newdata = db_test)
+predicciones <- predict(cv_RForest, data = testRF)
 
 # Resultados
 resultados <- data.frame(
-  id = test$id,
+  id = testRF$id,
   prediccion = predicciones
 )
 
 write.csv(resultados, "predicciones_por_id.csv", row.names = FALSE)
-
-stopCluster(cl)
