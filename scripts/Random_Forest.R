@@ -26,9 +26,6 @@ p_load(tidyverse,
 db <- readRDS('db_final.rds') %>% 
   as_tibble()
 
-test_hogares <- read.csv("test_hogares.csv") %>% 
-  as_tibble()
-
 # Modelo -----------------------------------------------------------------------
 
 
@@ -132,40 +129,39 @@ cv_RForest <- train(Pobre ~ cabecera + Dominio + Ncuartos + Ncuartos_duermen + p
 
 cv_RForest
 
+#Random Forest 3 ---------------------------------------------------------------
+
+set.seed(1112) #Se fija semilla para reproducibilidad
+
+mejor_modelo<- ranger::ranger(
+  Pobre~cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda + 
+    credit_vivienda_mes + arriendo_hipotetico + arriendo + Npersonas + 
+    Nper_unidad_gasto + linea_indigencia + linea_pobreza + factor_exp + Depto + 
+    factor_ex_dep + tamaño_hogar + prima_servicios + 
+    prima_navidad + prima_vacaciones + bonificaciones_anuales + 
+    horas_empleo_principal + cotiza_pension + empleo_secundario + 
+    horas_empleo_secundario + quiere_trabajar_mas + pensionado + trabaja_solo + 
+    microempresa + pequeña_empresa + mediana_empresa + gran_empresa + 
+    dicotom_ingxhorasextra + dicotom_primas + dicotom_bonificaciones + 
+    dicotom_subsalimentacion + dicotom_substransporte + dicotom_subsfamiliar + 
+    dicotom_subseduc + dicotom_alimentosextra + dicotom_viviendapago + 
+    dicotom_transporteempresa + dicotom_ingresosextraespecie + mujer + 
+    menor_15 + mayor_60 + edad + segur_social + segur_subsidiado + 
+    educ_sup + tiempo_empresa,
+  data = trainRF,
+  num.trees= 500, ## Numero de bootstrap samples y arboles a estimar. Default 500  
+  mtry= 10,   # N. var aleatoriamente seleccionadas en cada partición
+  min.node.size  = 1, ## Numero minimo de observaciones en un nodo
+  importance="impurity")
 
 
+## Realizar predicciones en test
+predicciones <- predict(mejor_modelo, data = testRF)$predictions
 
-
-
-# Remove the outcome variable
-testRF_input <- testRF[, setdiff(names(testRF), "Pobre")]
-
-# Predict
-predicciones <- predict(cv_RForest, newdata = testRF_input)
-
-# Combine with IDs
+## Crear un dataframe con el id y las predicciones
 resultados <- data.frame(
   id = testRF$id,
   prediccion = predicciones
 )
-
-# Predicciones
-predicciones <- predict(cv_RForest, data = testRF)
-
-# Resultados
-resultados <- data.frame(
-  id = testRF$id,
-  prediccion = predicciones
-)
-
-
-
-predicciones <- predict(cv_RForest, data = db_test)
-resultados <- data.frame(
-  id = testRF$id,
-  prediccion = predicciones
-)
-
-
 
 write.csv(resultados, "predicciones_3.csv", row.names = FALSE)
