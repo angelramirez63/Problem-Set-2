@@ -137,7 +137,7 @@ mejor_modelo <- ranger::ranger(
   Pobre ~ .,
   data = trainRF,
   num.trees = 500,
-  mtry = 8,
+  mtry = 10,
   min.node.size = 10,
   importance = "impurity",
   metric = "F1"
@@ -154,5 +154,5 @@ resultados <- data.frame(
   prediccion = predicciones
 )
 
-write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/predicciones_3.csv", row.names = FALSE)
+write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/predicciones_5.csv", row.names = FALSE)
 
