@@ -133,26 +133,16 @@ cv_RForest
 
 set.seed(1112) #Se fija semilla para reproducibilidad
 
-mejor_modelo<- ranger::ranger(
-  Pobre~cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda + 
-    credit_vivienda_mes + arriendo_hipotetico + arriendo + Npersonas + 
-    Nper_unidad_gasto + linea_indigencia + linea_pobreza + factor_exp + Depto + 
-    factor_ex_dep + tamaño_hogar + prima_servicios + 
-    prima_navidad + prima_vacaciones + bonificaciones_anuales + 
-    horas_empleo_principal + cotiza_pension + empleo_secundario + 
-    horas_empleo_secundario + quiere_trabajar_mas + pensionado + trabaja_solo + 
-    microempresa + pequeña_empresa + mediana_empresa + gran_empresa + 
-    dicotom_ingxhorasextra + dicotom_primas + dicotom_bonificaciones + 
-    dicotom_subsalimentacion + dicotom_substransporte + dicotom_subsfamiliar + 
-    dicotom_subseduc + dicotom_alimentosextra + dicotom_viviendapago + 
-    dicotom_transporteempresa + dicotom_ingresosextraespecie + mujer + 
-    menor_15 + mayor_60 + edad + segur_social + segur_subsidiado + 
-    educ_sup + tiempo_empresa,
+mejor_modelo <- ranger::ranger(
+  Pobre ~ .,
   data = trainRF,
-  num.trees= 500, ## Numero de bootstrap samples y arboles a estimar. Default 500  
-  mtry= 10,   # N. var aleatoriamente seleccionadas en cada partición
-  min.node.size  = 1, ## Numero minimo de observaciones en un nodo
-  importance="impurity")
+  num.trees = 500,
+  mtry = 8,
+  min.node.size = 10,
+  importance = "impurity",
+  metric = "F1"
+)
+
 
 
 ## Realizar predicciones en test
@@ -164,4 +154,5 @@ resultados <- data.frame(
   prediccion = predicciones
 )
 
-write.csv(resultados, "predicciones_3.csv", row.names = FALSE)
+write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/predicciones_3.csv", row.names = FALSE)
+
