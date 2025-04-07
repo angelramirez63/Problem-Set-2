@@ -64,6 +64,12 @@ trainRF$cabecera <- as.factor(trainRF$cabecera)
 trainRF$prop_vivienda <- as.factor(trainRF$prop_vivienda)
 trainRF$Dominio <- as.factor(trainRF$Dominio)
 
+testRF$Pobre <- as.factor(testRF$Pobre)
+testRF$Depto <- as.factor(testRF$Depto)
+testRF$cabecera <- as.factor(testRF$cabecera)
+testRF$prop_vivienda <- as.factor(testRF$prop_vivienda)
+testRF$Dominio <- as.factor(testRF$Dominio)
+
 #Definir control
 
 fitControl <- trainControl(method = 'cv', number = 10)
@@ -94,7 +100,7 @@ ctrl<- trainControl(method = "cv",
                     savePredictions = T)
 
 
-mtry_grid<-expand.grid(mtry = c(8, 16, 32, 48, 51), # 51 incluye bagging
+mtry_grid<-expand.grid(mtry = c(8, 51), # 51 incluye bagging
                        min.node.size= c(1, 5, 10, 50, 100, 200, 300, 500, 1000), #controla la complejidad del arbol
                        splitrule= 'gini') # tomamos gini como splitrule 
 mtry_grid
@@ -127,6 +133,22 @@ cv_RForest <- train(Pobre ~ cabecera + Dominio + Ncuartos + Ncuartos_duermen + p
 cv_RForest
 
 
+
+
+
+
+# Remove the outcome variable
+testRF_input <- testRF[, setdiff(names(testRF), "Pobre")]
+
+# Predict
+predicciones <- predict(cv_RForest, newdata = testRF_input)
+
+# Combine with IDs
+resultados <- data.frame(
+  id = testRF$id,
+  prediccion = predicciones
+)
+
 # Predicciones
 predicciones <- predict(cv_RForest, data = testRF)
 
@@ -136,4 +158,14 @@ resultados <- data.frame(
   prediccion = predicciones
 )
 
-write.csv(resultados, "predicciones_por_id.csv", row.names = FALSE)
+
+
+predicciones <- predict(cv_RForest, data = db_test)
+resultados <- data.frame(
+  id = testRF$id,
+  prediccion = predicciones
+)
+
+
+
+write.csv(resultados, "predicciones_3.csv", row.names = FALSE)
