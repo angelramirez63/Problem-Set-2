@@ -17,7 +17,9 @@ p_load(tidyverse,
        MLeval,    # Evaluar modelos de clasificación
        Metrics, 
        ggplot2, 
-       rio
+       rio, 
+       fastDummies, 
+       stringr
 )
 
 # Crear el directorio 
@@ -40,7 +42,7 @@ train_hogares <- read.csv("train_hogares.csv") %>%
 test_personas <- read.csv("test_personas.csv") %>% 
   as_tibble()
 
-train_personas <- readRDS("train_personas.rds") %>% 
+train_personas <- read.csv("train_personas.csv") %>% 
   as_tibble() #Por el peso del archivo se convirtió a rds
 
 ## Limpeza hogares -------------------------------------------------------------
@@ -344,7 +346,6 @@ personas_total <- personas_total %>%
 
 ### Variables no interpretables en agrupación
 personas_total <- personas_total %>% select(-P6050, # Parentesco con el jefe
-                    -P6210s1, # Se puede reemplazar con P6210 en la agrupación
                     -P6240, # Actividad semana pasada, toca transformar para conteo y es poco relevante
                     -Oficio, # 99 categorias
                     -P6430, # Posición en la empresa, muchas categporias
@@ -382,12 +383,15 @@ personas_total <- personas_total %>%
   mutate(segur_subsidiado = ifelse(tipos_segur_social == 3, yes = 1, no = 0)) # 1 si es subsidiado
 
 # Maximo nivel de educación
-personas_total <- personas_total %>% 
-  mutate(educ_sup = ifelse(max_nivel_educ == 6, yes = 1, no = 0)) # 1 si es universitario
+personas_total <- personas_total %>%
+  mutate(max_nivel_educ = as.factor(max_nivel_educ)) %>%
+  dummy_cols(select_columns = "max_nivel_educ", remove_selected_columns = FALSE)
 
-### Agrupar
-
-
+personas_total <- personas_total %>% rename(Ed_Preescolar = max_nivel_educ_2, 
+                                            Ed_Basica_primaria = max_nivel_educ_3, 
+                                            Ed_Basica_secundaria = max_nivel_educ_4, 
+                                            Ed_Media = max_nivel_educ_5,
+                                            Ed_Superior = max_nivel_educ_6)
 
 #Juan Esteban ------------------------------------------------------------------
 
@@ -454,7 +458,9 @@ personas_total <- personas_total %>%
                     P6630s6 = ifelse(P6630s6 == 1, 1, 0), 
                     P6920 = ifelse(P6920 == 2 & !is.na(P6920), 0 , P6920),
                     P7040 = ifelse(P7040 == 1, 1, 0), 
-                    P7090 = ifelse(P7090 == 1, 1, 0)
+                    P7090 = ifelse(P7090 == 1, 1, 0),
+                    P7495 = ifelse(P7495 == 1, 1, 0),
+                    P7505 = ifelse(P7505 == 1, 1, 0)
                     )
 
 
@@ -473,7 +479,7 @@ personas_total <- personas_total %>%
 #                            0 nadie los recibe 
 
 
-personas_total <- personas_total %>% 
+personas_agrupado <- personas_total %>% 
                     rename(
                       prima_servicios = P6630s1,
                       prima_navidad = P6630s2 , 
@@ -485,48 +491,86 @@ personas_total <- personas_total %>%
                       cotiza_pension = P6920, 
                       empleo_secundario = P7040, 
                       horas_empleo_secundario = P7045,
-                      quiere_trabajar_mas = P7090
+                      quiere_trabajar_mas = P7090, 
+                      recibe_pagos_arriendo = P7495, 
+                      recibe_ingresos_ad = P7505
                       ) %>% 
                       group_by(id) %>% 
                       summarise(
-                        prima_servicios = mean(prima_servicios), #Proporción de personas que reciben la prima en el hogar 
-                        prima_navidad = mean(prima_navidad), #Proporción de personas que reciben la prima en el hogar 
-                        prima_vacaciones = mean(prima_vacaciones), #Proporción de personas que reciben la prima en el hogar 
-                        bonificaciones_anuales = mean(bonificaciones_anuales), #Proporción de personas que reciben la bonificación en el hogar 
-                        horas_empleo_principal = mean(horas_empleo_principal), #Promedio de horas que trabajan los miembros del hogar
-                        cotiza_pension = mean(cotiza_pension), #Proporción de personas que reciben cotizan pensión en el hogar 
-                        empleo_secundario = mean(empleo_secundario), #Proporción de personas con un empleo secundario en el hogar
-                        horas_empleo_secundario = mean(horas_empleo_secundario), #Promedio de horas que trabajan los miembros del hogar
+                        t_prima_servicios = sum(prima_servicios), #Total de personas que reciben la prima en el hogar 
+                        t_prima_navidad = sum(prima_navidad), #Total de personas que reciben la prima en el hogar 
+                        t_prima_vacaciones = sum(prima_vacaciones), #Total de personas que reciben la prima en el hogar 
+                        t_bonificaciones_anuales = sum(bonificaciones_anuales), #Total de personas que reciben la bonificación en el hogar 
+                        t_horas_trabajadas = sum(horas_empleo_principal), #Horas total trabajadas en el hogar en empleo principal
+                        t_cotiza_pension = sum(cotiza_pension), #Total de personas que cotizan pensión en el hogar 
+                        t_empleo_secundario = sum(empleo_secundario), #Total de personas con un empleo secundario en el hogar
+                        t_horas_empleo_secundario = sum(horas_empleo_secundario), #Total de horas que trabajan los miembros del hogar
                         quiere_trabajar_mas = mean(quiere_trabajar_mas), #Proporción de personas que quieren trabajar más en el hogar 
                         pensionado = mean(pensionado), #Proporción de personas pensionadas en el hogar 
-                        trabaja_solo = mean(trabaja_solo), #Proporción de personas que trabajan solas en el hogar
-                        microempresa = mean(microempresa), #Proporción de personas que trabajan en una microempresa en el hogar (2-10 trabajadores)
-                        pequeña_empresa = mean(pequeña_empresa), #Proporción de personas que trabajan en una pequeña empresa en el hogar (11-30 trabajadores)
-                        mediana_empresa = mean(mediana_empresa), #Proporción de personas que trabajan en una mediana empresa en el hogar (31-100 trabajadores)
-                        gran_empresa = mean(gran_empresa), #Proporción de personas que trabajan en una gran empresa en el hogar (101+ trabajadores)
-                        dicotom_ingxhorasextra = mean(dicotom_ingxhorasextra),
-                        dicotom_primas = mean(dicotom_primas),
-                        dicotom_bonificaciones = mean(dicotom_bonificaciones),
-                        dicotom_subsalimentacion = mean(dicotom_subsalimentacion),
-                        dicotom_substransporte = mean(dicotom_substransporte),
-                        dicotom_subsfamiliar = mean(dicotom_subsfamiliar),
-                        dicotom_subseduc = mean(dicotom_subseduc),
-                        dicotom_alimentosextra = mean(dicotom_alimentosextra),
-                        dicotom_viviendapago = mean(dicotom_viviendapago),
-                        dicotom_transporteempresa = mean(dicotom_transporteempresa),
-                        dicotom_ingresosextraespecie = mean(dicotom_ingresosextraespecie), 
+                        t_trabaja_solo = sum(trabaja_solo), #total de personas que trabajan solas en el hogar
+                        t_microempresa = sum(microempresa), #Total de personas que trabajan en una microempresa en el hogar (2-10 trabajadores)
+                        t_pequeña_empresa = sum(pequeña_empresa), #Total de personas que trabajan en una pequeña empresa en el hogar (11-30 trabajadores)
+                        t_mediana_empresa = sum(mediana_empresa), #Total de personas que trabajan en una mediana empresa en el hogar (31-100 trabajadores)
+                        t_gran_empresa =sum(gran_empresa), #Total de personas que trabajan en una gran empresa en el hogar (101+ trabajadores)
+                        t_ingxhorasextra = sum(dicotom_ingxhorasextra),
+                        t_primas = sum(dicotom_primas),
+                        t_bonificaciones = sum(dicotom_bonificaciones),
+                        t_subsalimentacion = sum(dicotom_subsalimentacion),
+                        t_substransporte = sum(dicotom_substransporte),
+                        t_subsfamiliar = sum(dicotom_subsfamiliar),
+                        t_subseduc = sum(dicotom_subseduc),
+                        t_alimentosextra = sum(dicotom_alimentosextra),
+                        t_viviendapago = sum(dicotom_viviendapago),
+                        t_transporteempresa = sum(dicotom_transporteempresa),
+                        t_ingresosextraespecie = sum(dicotom_ingresosextraespecie), 
                         mujer = sum(mujer, na.rm = TRUE),
                         menor_15 = sum(menor_15, na.rm = TRUE),
                         mayor_60 = sum(mayor_60, na.rm = TRUE),
                         edad = mean(edad, na.rm = TRUE),
                         segur_social = sum(segur_social, na.rm = TRUE), # Necesita imputación
                         segur_subsidiado = sum(segur_subsidiado, na.rm = TRUE), # Necesita imputación
-                        educ_sup = sum(educ_sup, na.rm = TRUE), # Necesita imputación
-                        tiempo_empresa = mean(tiempo_empresa, na.rm = TRUE)
+                        P_Ed_Preescolar = mean(Ed_Preescolar, na.rm = TRUE), #Proporción de personas con max_nivel_educ preescolar
+                        P_Ed_Basica_primaria = mean(Ed_Basica_primaria, na.rm = TRUE), #Proporción con max_nivel_educ basica primaria
+                        P_Ed_Basica_secundaria = mean(Ed_Basica_secundaria, na.rm = TRUE), #Proporción con max_nivel_educ basica secundaria
+                        P_Ed_Media = mean(Ed_Media, na.rm = TRUE), #Proporción con max_nivel_educ media
+                        P_Ed_Superior = mean(Ed_Superior, na.rm = TRUE), #Proporción con max_nivel_educ superior
+                        grado_esc_promedio = round(mean(P6210s1, na.rm = TRUE), 0), #Grado escolar promedio
+                        t_tiempo_empresa = sum(tiempo_empresa, na.rm = TRUE),
+                        Ocupados = sum(Oc, na.rm=TRUE), Desempleados = sum(Des, na.rm=TRUE), 
+                        Inactivos = sum(Ina, na.rm=TRUE), Pet = sum(Pet, na.rm = TRUE),
+                        p_recibe_pagos_arriendo = mean(recibe_pagos_arriendo), 
+                        p_recibe_ingresos_ad = mean(recibe_ingresos_ad), 
+                        p_ocupados = mean(Oc), p_desempleados = mean(Des),
+                        p_inactivos = mean(Ina), p_pet = mean(Pet)
                       )
 
+#Calcular proporciones de ocupados que cumplen cierta condición por cada hogar
+personas_agrupado <- personas_agrupado %>%
+  mutate(across(
+    .cols = starts_with("t_"),
+    .fns = ~ ifelse(Ocupados == 0, 0, .x / Ocupados),
+    .names = "p_{.col}"
+  )) %>%
+  rename_with(.fn = ~ sub("^p_t_", "p_", .), .cols = starts_with("p_t_"))
 
-db_final <- left_join(hogares_total, personas_total, by = "id")
-export(db_final,'stores/db_final.rds' )
+  
+# Observar la cantidad de missing values de cada variable
+missing_values<-colSums(is.na(personas_agrupado))
+missing_tab<-data.frame(
+  Miss_val=missing_values
+)
+print(missing_tab)
+
+
+
+#Unir personas con hogares
+db_final <- left_join(hogares_total, personas_agrupado, by = "id")
+
+#Convertir variables categoricas en factores
+db_final <- db_final %>% mutate(across(c(Pobre, prop_vivienda, Depto, 
+                                   cabecera), as.factor))
+
+#Exportar
+export(db_final,'db_final.rds' )
 
 
