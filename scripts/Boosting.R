@@ -19,7 +19,6 @@ p_load(
   here, # Makes paths to files easier
   adabag, #Adaptative Boosting
   Metrics, # Métricas para evaluar modelos
-  MLmetrics, # Calcular metricas
   MLeval,    # Evaluar modelos de clasificación
   glmnet #Modelos de regularización 
 )  
@@ -37,7 +36,7 @@ db_final <- readRDS("stores/db_final.rds")
 #Datos de entrenamiento
 train <- db_final %>% 
          filter(test == 0) %>% 
-         select(-test)
+         select(-test, -factor_exp, -factor_ex_dep)
 
 train <- train %>% 
               filter(is.na(t_cotiza_pension) == F) #Remover missing values de la variable pensión
@@ -46,7 +45,7 @@ train <- train %>%
 #Datos de testeo
 test <- db_final %>%
         filter(test == 1) %>% 
-        select(-test)
+        select(-test, -factor_exp, -factor_ex_dep)
 
 test <- test %>% 
   filter(is.na(t_cotiza_pension) == F) #Remover missing values de la variable pensión
@@ -79,7 +78,6 @@ train <- train %>%
 
 test <- test <- test %>% 
          mutate(
-           Pobre = factor(Pobre, levels = c(1,0), labels = c("Si", "No")), #Dejar pobre como el primer nivel 
            cabecera = factor(cabecera, levels = c(1,2), labels = c("Cabecera", "Resto")), 
            prop_vivienda = factor(prop_vivienda, levels = c(1,2,3,4,5,6), 
                                                   labels = c("Propia_pagada", "Propia_pagando", 
@@ -118,14 +116,42 @@ table(train$Pobre)
 #Coclusiones de cada 10 observaciones 8 son no pobres y 20 son pobres -> hay un desbalance moderado 
 
 
-##Estrategia para corregir el desbalance --------#####
+#Visualizar desbalance 
+desbalance_pobre_plot <- ggplot(train, aes(x = Pobre, fill = Pobre)) +
+                         geom_bar() +
+                         scale_fill_manual(values = c("coral2", "deepskyblue")) +
+                         labs(title = "Desbalance de clases Pobre",
+                              x = "", y = "Número de personas") + 
+                          theme_minimal()
+desbalance_pobre_plot
 
+##Estrategia para tratar el desbalance ------####
 #Hibrido: up y down sample 
 
-#(i) primero upsmaple la clase minoritaria usando upsample -> dejarla en 66048 (usando SMOTE)
-#(ii) segundo downsample la clase mayoritaria usando downsample -> dejarla en 92355
+
+#(i) primero upsmaple la clase minoritaria usando upsample -> dejarla en 97830 
+#Se están triplico el tamaño de la clase minoritaria por medio de remuestro con remplaso
+minority_class <- train %>% filter(Pobre == "Si")
+minority_class_choosen <- sample(nrow(minority_class), 65220, replace = T) #Tomar un muestra con remplazo del mismo tamaño de la base
+minority_class_2 <- minority_class[minority_class_choosen[1:32610],]
+minority_class_3 <- minority_class[minority_class_choosen[32611:65220],]
+minority_class_up <- minority_class %>% 
+                     add_row(minority_class_2) %>%  
+                     add_row(minority_class_3)
+rm(minority_class, minority_class_choosen, minority_class_2, minority_class_3)
+
+
+#(ii) segundo downsample la clase mayoritaria  -> dejarla en 97830 
+#disminuyo el tamaño de la clase mayoritaria en 30% para queden el mismo número de observacines que en la clase minotaria triplicada
+mayority_class <- train %>% filter(Pobre == "No")
+mayority_class_choosen <- sample(nrow(mayority_class),97830, replace = F ) #Vector con los índices correspondientes a las filas de las observaciones escogidas aleatoriamente
+mayority_class_down <- mayority_class[mayority_class_choosen,]
+rm(mayority_class, mayority_class_choosen)
+
 #(iii) unir las dos clases 
 
+train2 <- mayority_class_down %>% add_row(minority_class_up)
+table(train2$Pobre) # Las clases quedaron balanceadas 
 
 #Usar pesos en las observaciones 
 
@@ -136,10 +162,26 @@ table(train$Pobre)
 
 ##Métricas de interés ------------ ####
 
+
+#F1 score: 
+
+
+
+fiveStats <- function(data, lev = NULL, model = NULL) {
+  
+
+  c(
+    caret::twoClassSummary(data, lev = lev, model = model),
+    caret::defaultSummary(data, lev = lev, model = model),
+
+  )
+}
+
+
 fiveStats <- function(...) {
   c(
     caret::twoClassSummary(...), # Returns ROC, Sensitivity, and Specificity
-    caret::defaultSummary(...)  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
+    caret::defaultSummary(...),  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
   )
 }
 
@@ -149,9 +191,9 @@ fiveStats <- function(...) {
 
 ctrl<- trainControl(method = "cv",
                     number = 5,
-                    summaryFunction = fiveStats,
+                    summaryFunction = fiveStats ,
                     classProbs = TRUE,
-                    verbose=FALSE,
+                    verbose=T, #Ver como van las ejecuciones 
                     savePredictions = T)
 
 
@@ -248,17 +290,17 @@ adagrid_mini<-  expand.grid(
                       maxdepth = c(4), 
                       coeflearn = c('Freund'))
 
-
 ##Entrenamiento del módelo ----------####
-adaboost_tree <- train(Pobre ~ Dominio + Ncuartos_duermen + arriendo + linea_pobreza + t_bonificaciones_anuales +
-                         t_microempresa + menor_15 + segur_subsidiado  + cabecera + prop_vivienda + mayor_60 + P_Ed_Superior
-                       + Desempleados + credit_vivienda_mes + edad + t_cotiza_pension + p_ocupados
-                       + p_gran_empresa + p_trabaja_solo + mujer + segur_social + Ncuartos,  #Poner variables con mayor capacidad explicativa 
+
+#las variables están generando problemas para correr el adaboost 
+
+adaboost_tree <- train(Pobre ~ Ncuartos_duermen,  #Poner variables con mayor capacidad explicativa 
                        data = train, 
                        method = "AdaBoost.M1",  # para implementar el algoritmo antes descrito
                        trControl = ctrl,
-                       metric = "F1",
-                       tuneGrid=adagrid
+                       metric = "ROC",
+                       tuneGrid= adagrid_mini, 
+
 )
 
 adaboost_tree
@@ -269,6 +311,7 @@ adaboost_tree
 #==============================Playground=======================================
 
 
+#Hay varias variables que están cerca de tener varianza casi cero nvz == T
+zero_var_check <- nearZeroVar(train, saveMetrics = T, names = T)
 
-
-
+#
