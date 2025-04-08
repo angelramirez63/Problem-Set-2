@@ -213,22 +213,13 @@ elastic_net_2 <- train(
                       + cabecera + prop_vivienda + mayor_60 + P_Ed_Superior + Desempleados + credit_vivienda_mes + edad + t_cotiza_pension + p_ocupados
                       + p_gran_empresa + p_trabaja_solo + mujer + segur_social + Ncuartos,  # Construcción de la fórmula del modelo
                         method = "glmnet",  # Usa glmnet para regresión con regularización (EN)
+                        trControl = ctrl,
                         data = train,  # Usa los datos de entrenamiento
                         family = "binomial",  # Es un modelo logístico (para clasificación binaria)
                         tuneGrid = ElasticNet_mini_grid,  # Especifica la grilla de hiperparámetros
                         preProcess = c("center", "scale")  # Normaliza las variables predictoras,
 
 )
-
-
-##Evaluando en la base de testeo
-test<- test  %>% mutate(Pobre_hat_en=predict(elastic_net_2,newdata = test,
-                                                       type = "raw"))
-##Matriz de confusión
-# Matriz de Confusión
-matriz_confusion_en <- confusionMatrix(data = test$Pobre_hat_en, 
-                               reference = test$desempleado, positive="desempleado", mode = "prec_recall")
-cm_logit_EN 
 
 
 
@@ -259,12 +250,15 @@ adagrid_mini<-  expand.grid(
 
 
 ##Entrenamiento del módelo ----------####
-adaboost_tree <- train(Pobre ~ .,  #Poner variables con mayor capacidad explicativa 
+adaboost_tree <- train(Pobre ~ Dominio + Ncuartos_duermen + arriendo + linea_pobreza + t_bonificaciones_anuales +
+                         t_microempresa + menor_15 + segur_subsidiado  + cabecera + prop_vivienda + mayor_60 + P_Ed_Superior
+                       + Desempleados + credit_vivienda_mes + edad + t_cotiza_pension + p_ocupados
+                       + p_gran_empresa + p_trabaja_solo + mujer + segur_social + Ncuartos,  #Poner variables con mayor capacidad explicativa 
                        data = train, 
                        method = "AdaBoost.M1",  # para implementar el algoritmo antes descrito
                        trControl = ctrl,
                        metric = "F1",
-                       tuneGrid=adagrid_mini
+                       tuneGrid=adagrid
 )
 
 adaboost_tree
