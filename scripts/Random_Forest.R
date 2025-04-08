@@ -38,13 +38,13 @@ Pobre_num <- db$Pobre
 
 trainRF <- db %>% 
   filter(test == 0) %>% 
-  select(-test)
+  select(-test) #Dejar por fuera la variable indicadora que clasifica a los datos como entrenamiento o prueba.
 
 #Crear base test
 
 testRF <- db %>% 
   filter(test == 1) %>% 
-  select(-test)
+  select(-test) #Dejar por fuera la variable indicadora que clasifica a los datos como entrenamiento o prueba.
 
 # Observar la cantidad de missing values de cada variable
 missing_values<-colSums(is.na(trainRF))
@@ -54,6 +54,7 @@ missing_tab<-data.frame(
 print(missing_tab)
 
 
+#Convertir variables dicótomas en factores. Las variables de conteo y proporción no son convertidas a factor.
 
 trainRF$Pobre <- as.factor(trainRF$Pobre)
 trainRF$Depto <- as.factor(trainRF$Depto)
@@ -89,17 +90,19 @@ fiveStats <- function(...) {
   )
 }
 
-ctrl<- trainControl(method = "cv",
-                    number = 5,
+#Establecer grilla de validación cruzada que encuentra el rango de búsqueda de los hiperparámetros del modelo.
+
+ctrl<- trainControl(method = "cv", 
+                    number = 5, #Validación cruzada con 5 folds.
                     summaryFunction = fiveStats,
                     classProbs = TRUE,
                     verbose=FALSE,
                     savePredictions = T)
 
 
-mtry_grid<-expand.grid(mtry = c(8, 51), # 51 incluye bagging
-                       min.node.size= c(1, 5, 10, 50, 100, 200, 300, 500, 1000), #controla la complejidad del arbol
-                       splitrule= 'gini') # tomamos gini como splitrule 
+mtry_grid<-expand.grid(mtry = c(8, 51), # Fijar m = {8,51}. Se toma sqrt(8) como benchmark, y 51 incluye bagging.
+                       min.node.size= c(1, 5, 10, 50, 100, 200, 300, 500, 1000), #Controla la complejidad (profundidad) del arbol
+                       splitrule= 'gini') # Tomamos gini como splitrule.
 mtry_grid
 
 
@@ -117,7 +120,7 @@ cv_RForest <- train(Pobre ~ cabecera + Dominio + Ncuartos + Ncuartos_duermen + p
                       dicotom_subseduc + dicotom_alimentosextra + dicotom_viviendapago + 
                       dicotom_transporteempresa + dicotom_ingresosextraespecie + mujer + 
                       menor_15 + mayor_60 + edad + segur_social + segur_subsidiado + 
-                      educ_sup + tiempo_empresa, 
+                      educ_sup + tiempo_empresa, #Se corre un RF clasificatorio con todas las variables disponibles creadas a partir de los datos a nivel persona, agrupados a nivel hogar.
                     data = trainRF, 
                     method = "ranger", # llamamos el paquete del metodo a utilizar
                     trControl = ctrl,
@@ -134,15 +137,14 @@ cv_RForest
 set.seed(1112) #Se fija semilla para reproducibilidad
 
 mejor_modelo <- ranger::ranger(
-  Pobre ~ .,
+  Pobre ~ ., #Se corre un RF clasificatorio con todas las variables disponibles creadas a partir de los datos a nivel persona, agrupados a nivel hogar.
   data = trainRF,
-  num.trees = 500,
+  num.trees = 500, #Hiperparámetros fijados a partir de los óptimos encontrados en el RF anterior.
   mtry = 10,
   min.node.size = 10,
   importance = "impurity",
   metric = "F1"
 )
-
 
 
 ## Realizar predicciones en test
@@ -155,4 +157,7 @@ resultados <- data.frame(
 )
 
 write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/predicciones_5.csv", row.names = FALSE)
+
+#Random Forest 4 ---------------------------------------------------------------
+
 
