@@ -102,7 +102,7 @@ train_skim <-skim(train)
 variables <- train_skim %>% select(skim_variable)
 rm(train_skim)
 
-#Tratar desbalance de clases ---------------------------------------------------
+#Tratar desbalance de clases (Remustreo hibrido) -------------------------------
 
 
 ##Caracteriza desbalance-----####
@@ -151,6 +151,7 @@ rm(mayority_class, mayority_class_choosen)
 #(iii) unir las dos clases 
 
 train2 <- mayority_class_down %>% add_row(minority_class_up)
+rm(minority_class_up, mayority_class_down)
 table(train2$Pobre) # Las clases quedaron balanceadas 
 
 #Usar pesos en las observaciones 
@@ -163,25 +164,11 @@ table(train2$Pobre) # Las clases quedaron balanceadas
 ##Métricas de interés ------------ ####
 
 
-#F1 score: 
-
-
-
-fiveStats <- function(data, lev = NULL, model = NULL) {
-  
-
-  c(
-    caret::twoClassSummary(data, lev = lev, model = model),
-    caret::defaultSummary(data, lev = lev, model = model),
-
-  )
-}
-
 
 fiveStats <- function(...) {
   c(
     caret::twoClassSummary(...), # Returns ROC, Sensitivity, and Specificity
-    caret::defaultSummary(...),  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
+    caret::defaultSummary(...)  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
   )
 }
 
@@ -229,39 +216,6 @@ ElasticNet_mini_grid <- expand.grid("alpha" = seq(0,1,by=0.25), lambda = lambda)
 
 
 
-###Elastic Net 1 #### 
-
-
-
-elastic_net <- train(
-                      Pobre ~ Dominio + cabecera + prop_vivienda + Depto + Ncuartos + 
-                        Ncuartos_duermen + credit_vivienda_mes + arriendo_hipotetico + 
-                        arriendo + Npersonas + Nper_unidad_gasto + linea_indigencia + 
-                        linea_pobreza + factor_exp + factor_ex_dep + t_prima_servicios + 
-                        t_prima_navidad + t_prima_vacaciones,  # Construcción de la fórmula del modelo
-                        method = "glmnet",  # Usa glmnet para regresión con regularización (EN)
-                        data = train,  # Usa los datos de entrenamiento
-                        family = "binomial",  # Es un modelo logístico (para clasificación binaria)
-                        tuneGrid = ElasticNet_mini_grid,  # Especifica la grilla de hiperparámetros
-                        preProcess = c("center", "scale")  # Normaliza las variables predictoras,
-                        
-)
-
-###Elastic Net 2 #### 
-
-
-elastic_net_2 <- train(
-                      Pobre ~ Dominio + Ncuartos_duermen + arriendo + linea_pobreza + t_bonificaciones_anuales + t_microempresa + menor_15 + segur_subsidiado 
-                      + cabecera + prop_vivienda + mayor_60 + P_Ed_Superior + Desempleados + credit_vivienda_mes + edad + t_cotiza_pension + p_ocupados
-                      + p_gran_empresa + p_trabaja_solo + mujer + segur_social + Ncuartos,  # Construcción de la fórmula del modelo
-                        method = "glmnet",  # Usa glmnet para regresión con regularización (EN)
-                        trControl = ctrl,
-                        data = train,  # Usa los datos de entrenamiento
-                        family = "binomial",  # Es un modelo logístico (para clasificación binaria)
-                        tuneGrid = ElasticNet_mini_grid,  # Especifica la grilla de hiperparámetros
-                        preProcess = c("center", "scale")  # Normaliza las variables predictoras,
-
-)
 
 
 
@@ -278,6 +232,36 @@ set.seed(91519) # important set seed.
 #                     probar las dos formas funcionales
 
 
+dplyr::filter(nvz == TRUE)
+
+##Tratar variables con nzv ------------####
+
+zero_var_check <- nearZeroVar(train, saveMetrics = T, names = T)
+zero_var_check <- zero_var_check %>% 
+                  filter(nzv == TRUE)
+
+train2 <- train2 %>% 
+          select(-credit_vivienda_mes, -t_bonificaciones_anuales, 
+                 -t_horas_empleo_secundario, -quiere_trabajar_mas, 
+                 -pensionado, -t_ingxhorasextra, -t_primas, -t_bonificaciones, 
+                 -t_subsalimentacion, -t_subseduc, -t_viviendapago, 
+                 -t_transporteempresa, -t_ingresosextraespecie, 
+                 -P_Ed_Preescolar, -p_desempleados, -p_bonificaciones_anuales, 
+                 -p_empleo_secundario, -p_horas_empleo_secundario, 
+                 -p_pequeña_empresa, -p_mediana_empresa, -p_ingxhorasextra, 
+                 -p_primas, -p_bonificaciones, -p_subsalimentacion, -p_subseduc,
+                 -p_alimentosextra, -p_viviendapago, -p_transporteempresa, 
+                 -p_ingresosextraespecie)
+          
+rm(zero_var_check)
+
+
+
+db_limpia <- db %>% 
+  filter(age >= 18 & ocu == 1) 
+
+##Entrenamiento del módelo ----------####
+
 
 
 adagrid<-  expand.grid(
@@ -290,16 +274,23 @@ adagrid_mini<-  expand.grid(
                       maxdepth = c(4), 
                       coeflearn = c('Freund'))
 
-##Entrenamiento del módelo ----------####
 
-#las variables están generando problemas para correr el adaboost 
 
-adaboost_tree <- train(Pobre ~ Ncuartos_duermen,  #Poner variables con mayor capacidad explicativa 
-                       data = train, 
+adaboost_tree <- train(Pobre ~ cabecera + Dominio + Ncuartos + Ncuartos_duermen 
+                       + prop_vivienda + arriendo_hipotetico + arriendo + 
+                         Npersonas + Nper_unidad_gasto + linea_indigencia + 
+                         linea_pobreza + Depto + Pobre + t_horas_trabajadas + 
+                         t_trabaja_solo + t_microempresa + t_pequeña_empresa + 
+                         t_mediana_empresa + t_gran_empresa + mujer + menor_15 + 
+                         mayor_60 + edad + segur_social + segur_subsidiado + 
+                         P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa
+                       + Ocupados + Desempleados + Inactivos + Pet + 
+                         p_horas_trabajadas + p_cotiza_pension,  #Poner variables con mayor capacidad explicativa 
+                       data = train2, 
                        method = "AdaBoost.M1",  # para implementar el algoritmo antes descrito
                        trControl = ctrl,
                        metric = "ROC",
-                       tuneGrid= adagrid_mini, 
+                       tuneGrid= adagrid_mini 
 
 )
 
@@ -310,8 +301,38 @@ adaboost_tree
 
 #==============================Playground=======================================
 
+###Elastic Net 1 #### 
 
-#Hay varias variables que están cerca de tener varianza casi cero nvz == T
-zero_var_check <- nearZeroVar(train, saveMetrics = T, names = T)
 
-#
+
+elastic_net <- train(
+  Pobre ~ Dominio + cabecera + prop_vivienda + Depto + Ncuartos + 
+    Ncuartos_duermen + credit_vivienda_mes + arriendo_hipotetico + 
+    arriendo + Npersonas + Nper_unidad_gasto + linea_indigencia + 
+    linea_pobreza + factor_exp + factor_ex_dep + t_prima_servicios + 
+    t_prima_navidad + t_prima_vacaciones,  # Construcción de la fórmula del modelo
+  method = "glmnet",  # Usa glmnet para regresión con regularización (EN)
+  data = train,  # Usa los datos de entrenamiento
+  family = "binomial",  # Es un modelo logístico (para clasificación binaria)
+  tuneGrid = ElasticNet_mini_grid,  # Especifica la grilla de hiperparámetros
+  preProcess = c("center", "scale")  # Normaliza las variables predictoras,
+  
+)
+
+###Elastic Net 2 #### 
+
+
+elastic_net_2 <- train(
+  Pobre ~ Dominio + Ncuartos_duermen + arriendo + linea_pobreza + t_bonificaciones_anuales + t_microempresa + menor_15 + segur_subsidiado 
+  + cabecera + prop_vivienda + mayor_60 + P_Ed_Superior + Desempleados + credit_vivienda_mes + edad + t_cotiza_pension + p_ocupados
+  + p_gran_empresa + p_trabaja_solo + mujer + segur_social + Ncuartos,  # Construcción de la fórmula del modelo
+  method = "glmnet",  # Usa glmnet para regresión con regularización (EN)
+  trControl = ctrl,
+  data = train,  # Usa los datos de entrenamiento
+  family = "binomial",  # Es un modelo logístico (para clasificación binaria)
+  tuneGrid = ElasticNet_mini_grid,  # Especifica la grilla de hiperparámetros
+  preProcess = c("center", "scale")  # Normaliza las variables predictoras,
+  
+)
+
+
