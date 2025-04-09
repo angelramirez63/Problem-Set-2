@@ -1,4 +1,9 @@
 #Random Forest  ----------------------------------------------------------------
+
+setwd("~/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores")
+
+#-------------------------------------------------------------------------------
+
 rm(list = ls())
 
 if(!require(pacman)) install.packages("pacman") ; require(pacman)
@@ -107,20 +112,7 @@ mtry_grid
 
 
 
-cv_RForest <- train(Pobre ~ cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda + 
-                      credit_vivienda_mes + arriendo_hipotetico + arriendo + Npersonas + 
-                      Nper_unidad_gasto + linea_indigencia + linea_pobreza + factor_exp + Depto + 
-                      factor_ex_dep  + tamaño_hogar + prima_servicios + 
-                      prima_navidad + prima_vacaciones + bonificaciones_anuales + 
-                      horas_empleo_principal + cotiza_pension + empleo_secundario + 
-                      horas_empleo_secundario + quiere_trabajar_mas + pensionado + trabaja_solo + 
-                      microempresa + pequeña_empresa + mediana_empresa + gran_empresa + 
-                      dicotom_ingxhorasextra + dicotom_primas + dicotom_bonificaciones + 
-                      dicotom_subsalimentacion + dicotom_substransporte + dicotom_subsfamiliar + 
-                      dicotom_subseduc + dicotom_alimentosextra + dicotom_viviendapago + 
-                      dicotom_transporteempresa + dicotom_ingresosextraespecie + mujer + 
-                      menor_15 + mayor_60 + edad + segur_social + segur_subsidiado + 
-                      educ_sup + tiempo_empresa, #Se corre un RF clasificatorio con todas las variables disponibles creadas a partir de los datos a nivel persona, agrupados a nivel hogar.
+cv_RForest <- train(Pobre ~ ., #Se corre un RF clasificatorio con todas las variables disponibles creadas a partir de los datos a nivel persona, agrupados a nivel hogar.
                     data = trainRF, 
                     method = "ranger", # llamamos el paquete del metodo a utilizar
                     trControl = ctrl,
@@ -159,5 +151,41 @@ resultados <- data.frame(
 write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/predicciones_5.csv", row.names = FALSE)
 
 #Random Forest 4 ---------------------------------------------------------------
+
+#El siguiente modelo RF reduce los parámetros de la regresión a estimar a través de Elastic Net.
+
+set.seed(1112) # Se fija semilla para reproducibilidad 
+
+trainRF$Pobre <- factor(trainRF$Pobre,
+                        levels = c(0, 1),
+                        labels = c("NoPobre", "Pobre"))
+
+fitControl <- trainControl( 
+  method = "cv",
+  number = 5) ##  5 fold CV
+
+model_form1 <- Pobre ~ linea_pobreza + cabecera + Dominio + Depto + p_ocupados + 
+  p_pet + p_primas + p_subsfamiliar + segur_subsidiado + t_horas_trabajadas + Ncuartos +
+  P_Ed_Superior + p_subsalimentacion + p_tiempo_empresa + p_gran_empresa + mujer + p_trabaja_solo +
+  p_cotiza_pension + credit_vivienda_mes + p_ingxhorasextra + quiere_trabajar_mas+ p_ocupados*mujer +
+  Depto*credit_vivienda_mes + p_ingxhorasextra*quiere_trabajar_mas
+
+
+lambda <- 10^seq(1, -4, length = 100)  # Genera una secuencia de valores de lambda para la regularización
+
+tuneGrid<- expand.grid('alpha'= seq(0,1, 0.01), # between 0 and 1. 
+                       lambda=lambda) 
+
+ENet<-train(model_form1,
+            data=trainRF,
+            method = 'glmnet', 
+            trControl = fitControl,
+            na.action = na.pass,
+            tuneGrid = tuneGrid,
+            family = "binomial" 
+            )  #specify the grid 
+
+
+
 
 
