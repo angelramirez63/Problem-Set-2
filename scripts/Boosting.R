@@ -20,7 +20,7 @@ p_load(
   adabag, #Adaptative Boosting
   Metrics, # Métricas para evaluar modelos
   MLeval,    # Evaluar modelos de clasificación
-  glmnet #Modelos de regularización 
+  Mlmetrics #Modelos de regularización 
 )  
 
 
@@ -47,8 +47,11 @@ test <- db_final %>%
         filter(test == 1) %>% 
         select(-test, -factor_exp, -factor_ex_dep)
 
-test <- test %>% 
-  filter(is.na(t_cotiza_pension) == F) #Remover missing values de la variable pensión
+test <- test %>% mutate(
+                         p_cotiza_pension = ifelse(is.na(p_cotiza_pension == T), 0, p_cotiza_pension), 
+                         pensionado = ifelse(is.na(pensionado == T), 0, pensionado), 
+                         t_cotiza_pension = ifelse(is.na(t_cotiza_pension == T), 0, t_cotiza_pension)
+)
 
 
 rm(db_final)
@@ -76,7 +79,7 @@ train <- train %>%
                                      "Sucre", "Tolima", "Valle del Cauca"))
          )
 
-test <- test <- test %>% 
+test <- test %>% 
          mutate(
            cabecera = factor(cabecera, levels = c(1,2), labels = c("Cabecera", "Resto")), 
            prop_vivienda = factor(prop_vivienda, levels = c(1,2,3,4,5,6), 
@@ -113,7 +116,7 @@ rm(train_skim)
 table(train$Pobre)
 #(Pobre == 0) corresponde a alrededor de 80% de las observaciones
 #(Pobre == 1) corresponde a alrededor de 20% de las observaciones
-#Coclusiones de cada 10 observaciones 8 son no pobres y 20 son pobres -> hay un desbalance moderado 
+#Coclusión por cada pobre hay cuatro no pobres -> desbalance moderado 
 
 
 #Visualizar desbalance 
@@ -126,7 +129,9 @@ desbalance_pobre_plot <- ggplot(train, aes(x = Pobre, fill = Pobre)) +
 desbalance_pobre_plot
 
 ##Estrategia para tratar el desbalance ------####
-#Hibrido: up y down sample 
+#Hibrido: up y down sample
+
+set.seed(91519) # important set seed. 
 
 
 #(i) primero upsmaple la clase minoritaria usando upsample -> dejarla en 97830 
@@ -154,23 +159,18 @@ train2 <- mayority_class_down %>% add_row(minority_class_up)
 rm(minority_class_up, mayority_class_down)
 table(train2$Pobre) # Las clases quedaron balanceadas 
 
-#Usar pesos en las observaciones 
-
 
 
 #Método de validación cruzada (k-fold cv)---------------------------------------
 
 
-##Métricas de interés ------------ ####
+##Métricas de interés ------------####
 
 
 
-fiveStats <- function(...) {
-  c(
-    caret::twoClassSummary(...), # Returns ROC, Sensitivity, and Specificity
-    caret::defaultSummary(...)  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
-  )
-}
+fiveStats <- function(...)  c(prSummary(...))  
+
+
 
 ##Validación cruzada (5-fold cv) --------------####
 #Usamos 5 folds porque es un número en nuestra regla del pulgar y además divide la 
@@ -196,7 +196,7 @@ set.seed(91519) # important set seed.
 #                     probar las dos formas funcionales
 
 
-dplyr::filter(nvz == TRUE)
+
 
 ##Tratar variables con nzv ------------####
 
@@ -204,7 +204,7 @@ zero_var_check <- nearZeroVar(train, saveMetrics = T, names = T)
 zero_var_check <- zero_var_check %>% 
                   filter(nzv == TRUE)
 
-train2 <- train2 %>% 
+train2 <- train2 %>%  #Remover que con casi totalmente nzr (near zero variance)
           select(-credit_vivienda_mes, -t_bonificaciones_anuales, 
                  -t_horas_empleo_secundario, -quiere_trabajar_mas, 
                  -pensionado, -t_ingxhorasextra, -t_primas, -t_bonificaciones, 
@@ -221,23 +221,14 @@ rm(zero_var_check)
 
 
 
-db_limpia <- db %>% 
-  filter(age >= 18 & ocu == 1) 
-
 ##Entrenamiento del módelo ----------####
 
 
 
 adagrid<-  expand.grid(
-                      mfinal = c( 50, 100),
-                      maxdepth = c(4,6,8), 
+                      mfinal = c(100,500), 
+                      maxdepth = c(4,5,6,7,8), 
                       coeflearn = c("Freund"))
-
-adagrid_mini<-  expand.grid(
-                      mfinal = c( 50),
-                      maxdepth = c(4), 
-                      coeflearn = c('Freund'))
-
 
 
 adaboost_tree <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + 
@@ -250,7 +241,7 @@ adaboost_tree <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda +
                        data = train2, 
                        method = "AdaBoost.M1",  # para implementar el algoritmo antes descrito
                        trControl = ctrl,
-                       metric = "ROC",
+                       metric = "F",
                        tuneGrid= adagrid 
                        
 )
@@ -259,7 +250,37 @@ adaboost_tree <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda +
 adaboost_tree
 
 
+##Preparar envió a Kaggle ---------####
 
+
+##Predicciones
+predictSample <- test  %>% 
+                        mutate(pobre_lab = 
+                                 stats::predict(adaboost_tree, 
+                                                newdata = test, 
+                                                type = "raw")) %>%     ##Es para obtener las etiquetas de la clases y no las probabilidades 
+                         select(id,pobre_lab)
+
+head(predictSample)
+
+
+##Recodificar predicciones 
+predictSample<- predictSample %>% 
+                  mutate(pobre=ifelse(pobre_lab=="Si",1,0)) %>% 
+                  select(id,pobre)
+head(predictSample)   
+
+
+#Guardar el archivo
+
+
+name<- paste0(
+  "Adaboost_mfinal_", as.character(adaboost_tree$bestTune$mfinal),
+  "_maxdepth_" , as.character(adaboost_tree$bestTune$maxdepth),
+  "_coeflearn_", as.character(adaboost_tree$bestTune$coeflearn),
+  ".csv") 
+
+write.csv(predictSample,name, row.names = FALSE)
 
 
 #==============================Playground=======================================
@@ -284,6 +305,17 @@ id + cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda +
   segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa 
 + Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + 
   p_cotiza_pension
+
+
+
+#Fivestats old ----------------------------------------------------------------
+
+fiveStats <- function(...) {
+  c(
+    caret::twoClassSummary(...), # Returns ROC, Sensitivity, and Specificity
+    caret::defaultSummary(...)  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
+  )
+}
 
 
 
