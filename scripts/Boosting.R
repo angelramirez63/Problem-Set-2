@@ -276,30 +276,50 @@ adagrid_mini<-  expand.grid(
 
 
 
-adaboost_tree <- train(Pobre ~ cabecera + Dominio + Ncuartos + Ncuartos_duermen 
-                       + prop_vivienda + arriendo_hipotetico + arriendo + 
-                         Npersonas + Nper_unidad_gasto + linea_indigencia + 
-                         linea_pobreza + Depto + Pobre + t_horas_trabajadas + 
-                         t_trabaja_solo + t_microempresa + t_pequeña_empresa + 
-                         t_mediana_empresa + t_gran_empresa + mujer + menor_15 + 
-                         mayor_60 + edad + segur_social + segur_subsidiado + 
-                         P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa
-                       + Ocupados + Desempleados + Inactivos + Pet + 
-                         p_horas_trabajadas + p_cotiza_pension,  #Poner variables con mayor capacidad explicativa 
+adaboost_tree <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + 
+                         arriendo_hipotetico + arriendo + Npersonas + Nper_unidad_gasto + 
+                         linea_indigencia + linea_pobreza + t_horas_trabajadas + 
+                         t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
+                         t_gran_empresa + mujer + menor_15 + mayor_60 + edad + segur_social + 
+                         segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
+                         Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + p_cotiza_pension ,  #Poner variables con mayor capacidad explicativa 
                        data = train2, 
                        method = "AdaBoost.M1",  # para implementar el algoritmo antes descrito
                        trControl = ctrl,
                        metric = "ROC",
-                       tuneGrid= adagrid_mini 
-
+                       tuneGrid= adagrid 
+                       
 )
+
 
 adaboost_tree
 
 
 
 
+
 #==============================Playground=======================================
+
+
+#Variables en uso: 
+  cabecera + Ncuartos + Ncuartos_duermen + prop_vivienda + 
+  arriendo_hipotetico + arriendo + Npersonas + Nper_unidad_gasto + 
+  linea_indigencia + linea_pobreza  + t_horas_trabajadas + 
+  t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
+  t_gran_empresa + mujer + menor_15 + mayor_60 + edad + segur_social + 
+  segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
+  Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + p_cotiza_pension
+
+
+#Todas las variables que no son nzv
+id + cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda + 
+  arriendo_hipotetico + arriendo + Npersonas + Nper_unidad_gasto + 
+  linea_indigencia + linea_pobreza + Depto + Pobre + t_horas_trabajadas + 
+  t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
+  t_gran_empresa + mujer + menor_15 + mayor_60 + edad + segur_social + 
+  segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa 
++ Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + 
+  p_cotiza_pension
 
 ###Elastic Net 1 #### 
 
