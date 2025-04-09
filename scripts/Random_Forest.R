@@ -61,17 +61,46 @@ print(missing_tab)
 
 #Convertir variables dicótomas en factores. Las variables de conteo y proporción no son convertidas a factor.
 
-trainRF$Pobre <- as.factor(trainRF$Pobre)
-trainRF$Depto <- as.factor(trainRF$Depto)
-trainRF$cabecera <- as.factor(trainRF$cabecera)
-trainRF$prop_vivienda <- as.factor(trainRF$prop_vivienda)
-trainRF$Dominio <- as.factor(trainRF$Dominio)
+trainRF <- trainRF %>% 
+  mutate(
+    Pobre = factor(Pobre, levels = c(1,0), labels = c("Si", "No")),  #Dejar pobre como el primer nivel 
+    cabecera = factor(cabecera, levels = c(1,2), labels = c("Cabecera", "Resto")), 
+    prop_vivienda = factor(prop_vivienda, levels = c(1,2,3,4,5,6), 
+                           labels = c("Propia_pagada", "Propia_pagando", 
+                                      "Arriendo", "Usufructo", "Sin_titulo", "Otra")), 
+    Depto = factor(Depto, 
+                   levels = c(5, 8, 11, 13, 15, 17, 18, 19, 20, 23, 25, 27, 41, 44, 47, 50, 
+                              52, 54, 63, 66, 68, 70, 73, 76), 
+                   labels = c("Antioquia", "Atlántico", "Bogotá", 
+                              "Bolívar", "Boyacá", "Caldas", 
+                              "Caquetá", "Cauca", "Cesar", "Córdoba",
+                              "Cundinamarca", "Chocó", "Huila", 
+                              "La Guajira", "Magdalena", "Meta", 
+                              "Nariño", "Norte de Santander", 
+                              "Quindío", "Risaralda", "Santander", 
+                              "Sucre", "Tolima", "Valle del Cauca"))
+  )
 
-testRF$Pobre <- as.factor(testRF$Pobre)
-testRF$Depto <- as.factor(testRF$Depto)
-testRF$cabecera <- as.factor(testRF$cabecera)
-testRF$prop_vivienda <- as.factor(testRF$prop_vivienda)
-testRF$Dominio <- as.factor(testRF$Dominio)
+testRF <- testRF <- testRF %>% 
+  mutate(
+    cabecera = factor(cabecera, levels = c(1,2), labels = c("Cabecera", "Resto")), 
+    prop_vivienda = factor(prop_vivienda, levels = c(1,2,3,4,5,6), 
+                           labels = c("Propia_pagada", "Propia_pagando", 
+                                      "Arriendo", "Usufructo", "Sin_titulo", "Otra")), 
+    Depto = factor(Depto, 
+                   levels = c(5, 8, 11, 13, 15, 17, 18, 19, 20, 23, 25, 27, 41, 44, 47, 50, 
+                              52, 54, 63, 66, 68, 70, 73, 76), 
+                   labels = c("Antioquia", "Atlántico", "Bogotá", 
+                              "Bolívar", "Boyacá", "Caldas", 
+                              "Caquetá", "Cauca", "Cesar", "Córdoba",
+                              "Cundinamarca", "Chocó", "Huila", 
+                              "La Guajira", "Magdalena", "Meta", 
+                              "Nariño", "Norte de Santander", 
+                              "Quindío", "Risaralda", "Santander", 
+                              "Sucre", "Tolima", "Valle del Cauca"))
+  )
+
+
 
 #Definir control
 
@@ -82,10 +111,6 @@ fitControl <- trainControl(method = 'cv', number = 10)
 #Random Forest 2 ---------------------------------------------------------------
 
 set.seed(1112) #Se fija semilla para reproducibilidad
-
-trainRF$Pobre <- factor(trainRF$Pobre,
-                        levels = c(0, 1),
-                        labels = c("NoPobre", "Pobre"))
 
 
 fiveStats <- function(...) {
@@ -156,22 +181,40 @@ write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook 
 
 set.seed(1112) # Se fija semilla para reproducibilidad 
 
-trainRF$Pobre <- factor(trainRF$Pobre,
-                        levels = c(0, 1),
-                        labels = c("NoPobre", "Pobre"))
+
+
 
 fitControl <- trainControl( 
   method = "cv",
-  number = 5) ##  5 fold CV
+  number = 5,
+  classProbs = TRUE,
+  savePredictions = T) ##  5 fold CV
 
-model_form1 <- Pobre ~ linea_pobreza + cabecera + Dominio + Depto + p_ocupados + 
+lambda <- 10^seq(1, -4, length = 100)  # Genera una secuencia de valores de lambda para la regularización
+
+
+model_form1 <- train(Pobre ~ linea_pobreza + cabecera + Dominio + Depto + p_ocupados + 
   p_pet + p_primas + p_subsfamiliar + segur_subsidiado + t_horas_trabajadas + Ncuartos +
   P_Ed_Superior + p_subsalimentacion + p_tiempo_empresa + p_gran_empresa + mujer + p_trabaja_solo +
   p_cotiza_pension + credit_vivienda_mes + p_ingxhorasextra + quiere_trabajar_mas+ p_ocupados*mujer +
-  Depto*credit_vivienda_mes + p_ingxhorasextra*quiere_trabajar_mas
+  Depto*credit_vivienda_mes + p_ingxhorasextra*quiere_trabajar_mas, 
+  data = trainRF,
+  metric = 'F1',
+  method = 'glmnet',
+  trControl = fitControl,
+  na.action = na.pass,
+  tuneGrid = expand.grid(expand.grid('alpha'= seq(0,1, 0.01), 
+                                     lambda=lambda)
+                         
+          
+                         
+      )
+)
+
+  
 
 
-lambda <- 10^seq(1, -4, length = 100)  # Genera una secuencia de valores de lambda para la regularización
+
 
 tuneGrid<- expand.grid('alpha'= seq(0,1, 0.01), # between 0 and 1. 
                        lambda=lambda) 
