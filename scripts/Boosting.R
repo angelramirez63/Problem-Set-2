@@ -102,7 +102,7 @@ train_skim <-skim(train)
 variables <- train_skim %>% select(skim_variable)
 rm(train_skim)
 
-#Tratar desbalance de clases (Remustreo hibrido) -------------------------------
+#Tratar desbalance de clases (Remuestreo hibrido) -------------------------------
 
 
 ##Caracteriza desbalance-----####
@@ -182,42 +182,6 @@ ctrl<- trainControl(method = "cv",
                     classProbs = TRUE,
                     verbose=T, #Ver como van las ejecuciones 
                     savePredictions = T)
-
-
-
-#Estimar Elastic-Net para identificar variables --------------------------------
-
-set.seed(91519) # important set seed. 
-
-
-
-##Hiperparámetros -----------####
-
-#En este caso los hiperparámetros que vamos a escoger son 
-#    (i) lambda: complejidad del modelo. Controlo que tan que van a encoger los coeficientes 
-#    (ii) alpha: mezcla entre la penalidad de laso (alpha == 1) y la de ridge (alpha = 0 )
-
-
-
-ElasticNet_grid <- expand_grid( 
-                    lambda = seq(0, 0.1, by = 0.01),
-                    alpha = seq(0, 1, by = 0.01)
-                                )
-
-
-lambda <- 10^seq(1, -4, length = 100)  # Genera una secuencia de valores de lambda para la regularización
-ElasticNet_mini_grid <- expand.grid("alpha" = seq(0,1,by=0.25), lambda = lambda) 
-
-
-  
-
-  
-##Entrenamiento del módelo ---------####
-
-
-
-
-
 
 
 #Estimar el módelo (AdaBoost) --------------------------------------------------
@@ -302,7 +266,7 @@ adaboost_tree
 
 
 #Variables en uso: 
-  cabecera + Ncuartos + Ncuartos_duermen + prop_vivienda + 
+cabecera + Ncuartos + Ncuartos_duermen + prop_vivienda + 
   arriendo_hipotetico + arriendo + Npersonas + Nper_unidad_gasto + 
   linea_indigencia + linea_pobreza  + t_horas_trabajadas + 
   t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
@@ -320,6 +284,35 @@ id + cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda +
   segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa 
 + Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + 
   p_cotiza_pension
+
+
+
+#Estimar Elastic-Net para identificar variables --------------------------------
+
+set.seed(91519) # important set seed. 
+
+
+
+##Hiperparámetros -----------####
+
+#En este caso los hiperparámetros que vamos a escoger son 
+#    (i) lambda: complejidad del modelo. Controlo que tan que van a encoger los coeficientes 
+#    (ii) alpha: mezcla entre la penalidad de laso (alpha == 1) y la de ridge (alpha = 0 )
+
+
+
+ElasticNet_grid <- expand_grid( 
+  lambda = seq(0, 0.1, by = 0.01),
+  alpha = seq(0, 1, by = 0.01)
+)
+
+
+lambda <- 10^seq(1, -4, length = 100)  # Genera una secuencia de valores de lambda para la regularización
+ElasticNet_mini_grid <- expand.grid("alpha" = seq(0,1,by=0.25), lambda = lambda) 
+
+##Entrenamiento del módelo ---------####
+
+
 
 ###Elastic Net 1 #### 
 
