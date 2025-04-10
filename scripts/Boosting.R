@@ -6,6 +6,8 @@
 rm(list = ls())
 cat("\014")
 
+#Definir semilla
+set.seed(91519) # important set seed. 
 
 #Cargar paquetes
 #cargar adabag después(no lo he podido cargar)
@@ -20,7 +22,8 @@ p_load(
   adabag, #Adaptative Boosting
   Metrics, # Métricas para evaluar modelos
   MLeval,    # Evaluar modelos de clasificación
-  Mlmetrics #Modelos de regularización 
+  MLmetrics, #Métricas para evaluar modelos
+  rio
 )  
 
 
@@ -99,12 +102,6 @@ test <- test %>%
          )
 
 
-##Nombres variables ---------####
-
-train_skim <-skim(train)
-variables <- train_skim %>% select(skim_variable)
-rm(train_skim)
-
 #Tratar desbalance de clases (Remuestreo hibrido) -------------------------------
 
 
@@ -137,7 +134,7 @@ set.seed(91519) # important set seed.
 #(i) primero upsmaple la clase minoritaria usando upsample -> dejarla en 97830 
 #Se están triplico el tamaño de la clase minoritaria por medio de remuestro con remplaso
 minority_class <- train %>% filter(Pobre == "Si")
-minority_class_choosen <- sample(nrow(minority_class), 65220, replace = T) #Tomar un muestra con remplazo del mismo tamaño de la base
+minority_class_choosen <- sample(nrow(minority_class), 65220, replace = T) #Tomar un muestra con remplazo del doble del tamaño de la base
 minority_class_2 <- minority_class[minority_class_choosen[1:32610],]
 minority_class_3 <- minority_class[minority_class_choosen[32611:65220],]
 minority_class_up <- minority_class %>% 
@@ -166,10 +163,13 @@ table(train2$Pobre) # Las clases quedaron balanceadas
 
 ##Métricas de interés ------------####
 
-
-
-fiveStats <- function(...)  c(prSummary(...))  
-
+fiveStats <- function(...) {
+  c(
+    caret::twoClassSummary(...), # Returns ROC, Sensitivity, and Specificity
+    caret::defaultSummary(...),  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
+    prSummary(...)  
+  )
+}
 
 
 ##Validación cruzada (5-fold cv) --------------####
@@ -204,7 +204,7 @@ zero_var_check <- nearZeroVar(train, saveMetrics = T, names = T)
 zero_var_check <- zero_var_check %>% 
                   filter(nzv == TRUE)
 
-train2 <- train2 %>%  #Remover que con casi totalmente nzr (near zero variance)
+train2 <- train2 %>%  #Remover variables  con casi nzr (near zero variance)
           select(-credit_vivienda_mes, -t_bonificaciones_anuales, 
                  -t_horas_empleo_secundario, -quiere_trabajar_mas, 
                  -pensionado, -t_ingxhorasextra, -t_primas, -t_bonificaciones, 
@@ -224,11 +224,17 @@ rm(zero_var_check)
 ##Entrenamiento del módelo ----------####
 
 
+adaboost_mini_grid <- expand.grid(
+                      mfinal = c(50), 
+                      maxdepth = c(4), 
+                      coeflearn = c("Freund"))
 
-adagrid<-  expand.grid(
-                      mfinal = c(100,500), 
+
+adaboost_grid <- expand.grid(
+                      mfinal = c(100,500,900), 
                       maxdepth = c(4,5,6,7,8), 
                       coeflearn = c("Freund"))
+
 
 
 adaboost_tree <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + 
@@ -242,12 +248,21 @@ adaboost_tree <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda +
                        method = "AdaBoost.M1",  # para implementar el algoritmo antes descrito
                        trControl = ctrl,
                        metric = "F",
-                       tuneGrid= adagrid 
+                       tuneGrid= adaboost_mini_grid
                        
 )
 
 
 adaboost_tree
+
+
+##Importancia de las variables ---------####
+
+variables_importance <- varImp(adaboost_tree_mini_grid)
+variables_importance_full <- varImp(adaboost_tree)
+#para interpretar esta salida ten en cuenta que se le asigna a las variables un puntaje normalizado de 0-100
+#teniendo en cuenta en cuantos árboles aparecio la variable y si la variable fue usada por los árboles que hicieron mejores predicciones 
+
 
 
 ##Preparar envió a Kaggle ---------####
@@ -310,14 +325,12 @@ id + cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda +
 
 #Fivestats old ----------------------------------------------------------------
 
+
 fiveStats <- function(...) {
   c(
-    caret::twoClassSummary(...), # Returns ROC, Sensitivity, and Specificity
-    caret::defaultSummary(...)  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
+    prSummary(...)  
   )
 }
-
-
 
 #Estimar Elastic-Net para identificar variables --------------------------------
 
