@@ -60,7 +60,7 @@ test <- test %>% mutate(
 rm(db_final)
 
 
-#Variables  catergorícas como factores  ----------------------------------------
+#Variables  catergorícas como factores------------------------------------------
 
 train <- train %>% 
          mutate(
@@ -102,7 +102,7 @@ test <- test %>%
          )
 
 
-#Tratar desbalance de clases (Remuestreo hibrido) -------------------------------
+#Tratar desbalance de clases (Remuestreo hibrido) ------------------------------
 
 
 ##Caracteriza desbalance-----####
@@ -223,15 +223,35 @@ rm(zero_var_check)
 
 ##Entrenamiento del módelo ----------####
 
+#Los casos 2 y 3 se demoran ¡MUCHO! en correr 
 
+#1)Caso inicial: 
 adaboost_mini_grid <- expand.grid(
-                      mfinal = c(50), 
+                      mfinal = c(100), 
                       maxdepth = c(4), 
                       coeflearn = c("Freund"))
 
 
+
+adaboost_tree_mini <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + 
+                         arriendo_hipotetico + arriendo + Npersonas + Nper_unidad_gasto + 
+                         linea_indigencia + linea_pobreza + t_horas_trabajadas + 
+                         t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
+                         t_gran_empresa + mujer + menor_15 + mayor_60 + edad + segur_social + 
+                         segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
+                         Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + p_cotiza_pension ,  #Poner variables con mayor capacidad explicativa 
+                       data = train2, 
+                       method = "AdaBoost.M1",  # para implementar el algoritmo antes descrito
+                       trControl = ctrl,
+                       metric = "F",
+                       tuneGrid= adaboost_mini_grid
+                       
+)
+
+
+#2)Prueba grilla más grandes
 adaboost_grid <- expand.grid(
-                      mfinal = c(100,500,900), 
+                      mfinal = c(100,500), 
                       maxdepth = c(4,5,6,7,8), 
                       coeflearn = c("Freund"))
 
@@ -248,18 +268,40 @@ adaboost_tree <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda +
                        method = "AdaBoost.M1",  # para implementar el algoritmo antes descrito
                        trControl = ctrl,
                        metric = "F",
-                       tuneGrid= adaboost_mini_grid
-                       
+                       tuneGrid= adaboost_grid
 )
 
 
-adaboost_tree
+#3)Caso final
+adaboost_grid_final <- expand.grid(
+                      mfinal = c(900), 
+                      maxdepth = c(8), 
+                      coeflearn = c("Freund"))
+
+
+
+adaboost_tree_final <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + 
+                               arriendo_hipotetico + arriendo + Npersonas + Nper_unidad_gasto + 
+                               linea_indigencia + linea_pobreza + t_horas_trabajadas + 
+                               t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
+                               t_gran_empresa + mujer + menor_15 + mayor_60 + edad + segur_social + 
+                               segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
+                               Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + p_cotiza_pension ,  #Poner variables con mayor capacidad explicativa 
+                             data = train2, 
+                             method = "AdaBoost.M1",  # para implementar el algoritmo antes descrito
+                             trControl = ctrl,
+                             metric = "F",
+                             tuneGrid= adaboost_grid_final
+)                             
+
+
 
 
 ##Importancia de las variables ---------####
 
-variables_importance <- varImp(adaboost_tree_mini_grid)
-variables_importance_full <- varImp(adaboost_tree)
+variables_importance_mt <- varImp(adaboost_tree_mini)
+variables_importance_t <- varImp(adaboost_tree)
+variables_importance_ft <- varImp(adaboost_tree_final)
 #para interpretar esta salida ten en cuenta que se le asigna a las variables un puntaje normalizado de 0-100
 #teniendo en cuenta en cuantos árboles aparecio la variable y si la variable fue usada por los árboles que hicieron mejores predicciones 
 
@@ -298,7 +340,7 @@ name<- paste0(
 write.csv(predictSample,name, row.names = FALSE)
 
 
-#==============================Playground=======================================
+#============================= Otras cosas =====================================
 
 
 #Variables en uso: 
