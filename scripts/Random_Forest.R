@@ -205,8 +205,6 @@ write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook 
 set.seed(1112) # Se fija semilla para reproducibilidad 
 
 
-
-
 fitControl <- trainControl( 
   method = "cv",
   number = 5,
@@ -216,42 +214,22 @@ fitControl <- trainControl(
 lambda <- 10^seq(1, -4, length = 100)  # Genera una secuencia de valores de lambda para la regularización
 
 
-model_form1 <- train(Pobre ~ linea_pobreza + cabecera + Dominio + Depto + p_ocupados + 
-  p_pet + p_primas + p_subsfamiliar + segur_subsidiado + t_horas_trabajadas + Ncuartos +
-  P_Ed_Superior + p_subsalimentacion + p_tiempo_empresa + p_gran_empresa + mujer + p_trabaja_solo +
-  p_cotiza_pension + credit_vivienda_mes + p_ingxhorasextra + quiere_trabajar_mas+ p_ocupados*mujer +
-  Depto*credit_vivienda_mes + p_ingxhorasextra*quiere_trabajar_mas, 
+model_form1 <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arriendo_hipotetico +
+                       arriendo + Npersonas+ Nper_unidad_gasto + linea_indigencia + linea_pobreza +
+                       t_horas_trabajadas + t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
+                       t_gran_empresa + menor_15 + mayor_60 + mujer + edad + segur_social + segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
+                       Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + p_cotiza_pension, 
   data = trainRF,
   metric = 'F1',
   method = 'glmnet',
+  family = "binomial",
   trControl = fitControl,
   na.action = na.pass,
-  tuneGrid = expand.grid(expand.grid('alpha'= seq(0,1, 0.1), 
+  tuneGrid = expand.grid(expand.grid('alpha'= seq(0,1, 0.01), 
                                      lambda=lambda)
-                         
-          
-                         
       )
 )
 
   
-
-
-
-
-tuneGrid<- expand.grid('alpha'= seq(0,1, 0.01), # between 0 and 1. 
-                       lambda=lambda) 
-
-ENet<-train(model_form1,
-            data=trainRF,
-            method = 'glmnet', 
-            trControl = fitControl,
-            na.action = na.pass,
-            tuneGrid = tuneGrid,
-            family = "binomial" 
-            )  #specify the grid 
-
-
-
 
 
