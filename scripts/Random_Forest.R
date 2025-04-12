@@ -171,6 +171,18 @@ cv_RForest
 
 variables_importantes_RF1 = varImp(cv_RForest)
 
+## Realizar predicciones en test
+prediccionesRF1 <- predict(cv_RForest, newdata = testRF)
+
+## Crear un dataframe con el id y las predicciones
+resultadosRF1 <- data.frame(
+  id = testRF$id,
+  prediccion = prediccionesRF1
+)
+
+write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/RF_m6_minnode10.csv", row.names = FALSE)
+
+
 
 #Random Forest 2 ---------------------------------------------------------------
 
@@ -186,6 +198,9 @@ mejor_modelo <- ranger::ranger(
   metric = "F1"
 )
 
+#Observar importancia de variables
+
+variables_importantes_RF2 = varImp(mejor_modelo)
 
 ## Realizar predicciones en test
 predicciones <- predict(mejor_modelo, data = testRF)$predictions
