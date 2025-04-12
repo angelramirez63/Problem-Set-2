@@ -318,11 +318,13 @@ mejor_modelo3 <- ranger::ranger(
     p_trabaja_solo + p_microempresa + p_gran_empresa + p_substransporte + 
     p_tiempo_empresa, #Se corre un RF clasificatorio con todas las variables disponibles creadas a partir de los datos a nivel persona, agrupados a nivel hogar.
   data = trainRF,
-  num.trees = 500, #Hiperparámetros fijados a partir de los óptimos encontrados en el RF anterior.
+  num.trees = 1000, #Hiperparámetros fijados a partir de los óptimos encontrados en el RF anterior.
   mtry = 10,
   min.node.size = 1,
   importance = "impurity",
 )
+
+mejor_modelo3
 
 ## Realizar predicciones en test
 prediccionesRF2 <- predict(mejor_modelo3, data = testRF)$predictions
