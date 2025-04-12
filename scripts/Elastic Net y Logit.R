@@ -12,9 +12,12 @@ p_load(
   leaps,     #for subset  model selection
   glmnet,    # Elastic net
   doParallel)
-#Directorio
 
-setwd("C:/Users/Lenovo/OneDrive - Universidad de los andes/Documentos/2025-1/Big Data y Machine Learning/Taller 2")
+#Definir el directorio
+wd <- here()
+setwd(wd)
+rm(wd)
+
 
 #Cargar datos
 
