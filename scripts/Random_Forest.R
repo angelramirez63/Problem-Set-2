@@ -83,6 +83,7 @@ trainRF <- trainRF %>%
 
 testRF <- testRF <- testRF %>% 
   mutate(
+    Pobre = factor(Pobre, levels = c(1,0), labels = c("Si", "No")),  #Dejar pobre como el primer nivel 
     cabecera = factor(cabecera, levels = c(1,2), labels = c("Cabecera", "Resto")), 
     prop_vivienda = factor(prop_vivienda, levels = c(1,2,3,4,5,6), 
                            labels = c("Propia_pagada", "Propia_pagando", 
@@ -171,8 +172,7 @@ cv_RForest #Sugiere parámetros óptimos de mrty = 6, min node size = 1.
 
 set.seed(1112) #Se fija semilla para reproducibilidad
 
-mejor_modelo1 <- ranger::ranger(
-  Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arriendo_hipotetico +
+mejor_modelo1 <- ranger::ranger(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arriendo_hipotetico +
     arriendo + Npersonas+ Nper_unidad_gasto + linea_indigencia + linea_pobreza +
     t_horas_trabajadas + t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
     t_gran_empresa + menor_15 + mayor_60 + mujer + edad + segur_social + segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
@@ -194,8 +194,17 @@ resultadosRF1 <- data.frame(
   prediccion = prediccionesRF1
 )
 
-write.csv(resultadosRF1, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/RF_m6_minnode10.csv", row.names = FALSE)
+# Convertir predicciones a 0 y 1
+pred_binarias <- ifelse(prediccionesRF1 == "Si", 1, 0)
 
+# Crear el dataframe final
+resultadosRF1 <- data.frame(
+  id = testRF$id,
+  prediction = pred_binarias
+)
+
+# Guardar el archivo CSV
+write.csv(resultadosRF1, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/Predicciones/RF_m6_minnode1.csv", row.names = FALSE)
 
 #Random Forest 2 ---------------------------------------------------------------
 
@@ -220,7 +229,7 @@ resultados <- data.frame(
   prediccion = predicciones
 )
 
-write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/predicciones_5.csv", row.names = FALSE)
+write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/Predicciones/predicciones_5.csv", row.names = FALSE)
 
 #Random Forest 3 ---------------------------------------------------------------
 
