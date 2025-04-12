@@ -101,17 +101,31 @@ testRF <- testRF <- testRF %>%
   )
 
 
+#Revisar variables cuya varianza sea casi 0 y removerlas.
 
-#Definir control
+zero_var_check <- nearZeroVar(trainRF, saveMetrics = T, names = T)
+zero_var_check <- zero_var_check %>% 
+  filter(nzv == TRUE)
 
-fitControl <- trainControl(method = 'cv', number = 10)
+trainRF <- trainRF %>%  #Remover variables  con casi nzr (near zero variance)
+  select(-credit_vivienda_mes, -t_bonificaciones_anuales, 
+         -t_horas_empleo_secundario, -quiere_trabajar_mas, 
+         -pensionado, -t_ingxhorasextra, -t_primas, -t_bonificaciones, 
+         -t_subsalimentacion, -t_subseduc, -t_viviendapago, 
+         -t_transporteempresa, -t_ingresosextraespecie, 
+         -P_Ed_Preescolar, -p_desempleados, -p_bonificaciones_anuales, 
+         -p_empleo_secundario, -p_horas_empleo_secundario, 
+         -p_pequeña_empresa, -p_mediana_empresa, -p_ingxhorasextra, 
+         -p_primas, -p_bonificaciones, -p_subsalimentacion, -p_subseduc,
+         -p_alimentosextra, -p_viviendapago, -p_transporteempresa, 
+         -p_ingresosextraespecie)
 
-#Ideas: Usar prop o conteo
+rm(zero_var_check)
 
-#Random Forest 2 ---------------------------------------------------------------
+#Random Forest 1 ---------------------------------------------------------------
+
 
 set.seed(1112) #Se fija semilla para reproducibilidad
-
 
 fiveStats <- function(...) {
   c(
@@ -130,14 +144,18 @@ ctrl<- trainControl(method = "cv",
                     savePredictions = T)
 
 
-mtry_grid<-expand.grid(mtry = c(8, 51), # Fijar m = {8,51}. Se toma sqrt(8) como benchmark, y 51 incluye bagging.
-                       min.node.size= c(1, 5, 10, 50, 100, 200, 300, 500, 1000), #Controla la complejidad (profundidad) del arbol
+mtry_grid<-expand.grid(mtry = c(6, 8, 10, 30), # Fijar m = {6, 8, 10, 30}. Se toma sqrt(30) como benchmark, y 30 incluye bagging.
+                       min.node.size= c(10, 100, 500, 1000), #Controla la complejidad (profundidad) del arbol
                        splitrule= 'gini') # Tomamos gini como splitrule.
 mtry_grid
 
 
 
-cv_RForest <- train(Pobre ~ ., #Se corre un RF clasificatorio con todas las variables disponibles creadas a partir de los datos a nivel persona, agrupados a nivel hogar.
+cv_RForest <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arriendo_hipotetico +
+                     arriendo + Npersonas+ Nper_unidad_gasto + linea_indigencia + linea_pobreza +
+                      t_horas_trabajadas + t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
+                      t_gran_empresa + menor_15 + mayor_60 + mujer + edad + segur_social + segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
+                      Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + p_cotiza_pension,
                     data = trainRF, 
                     method = "ranger", # llamamos el paquete del metodo a utilizar
                     trControl = ctrl,
@@ -149,7 +167,12 @@ cv_RForest <- train(Pobre ~ ., #Se corre un RF clasificatorio con todas las vari
 
 cv_RForest
 
-#Random Forest 3 ---------------------------------------------------------------
+#Observar importancia de variables
+
+variables_importantes_RF1 = varImp(cv_RForest)
+
+
+#Random Forest 2 ---------------------------------------------------------------
 
 set.seed(1112) #Se fija semilla para reproducibilidad
 
@@ -175,7 +198,7 @@ resultados <- data.frame(
 
 write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/predicciones_5.csv", row.names = FALSE)
 
-#Random Forest 4 ---------------------------------------------------------------
+#Random Forest 3 ---------------------------------------------------------------
 
 #El siguiente modelo RF reduce los parámetros de la regresión a estimar a través de Elastic Net.
 
@@ -203,7 +226,7 @@ model_form1 <- train(Pobre ~ linea_pobreza + cabecera + Dominio + Depto + p_ocup
   method = 'glmnet',
   trControl = fitControl,
   na.action = na.pass,
-  tuneGrid = expand.grid(expand.grid('alpha'= seq(0,1, 0.01), 
+  tuneGrid = expand.grid(expand.grid('alpha'= seq(0,1, 0.1), 
                                      lambda=lambda)
                          
           
