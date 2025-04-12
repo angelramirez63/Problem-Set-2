@@ -42,22 +42,20 @@ train_hogares <- read.csv("train_hogares.csv") %>%
 test_personas <- read.csv("test_personas.csv") %>% 
   as_tibble()
 
-train_personas <- read.csv("train_personas.csv") %>% 
+train_personas <- readRDS("train_personas.rds") %>% 
   as_tibble() #Por el peso del archivo se convirtió a rds
 
 ## Limpeza hogares -------------------------------------------------------------
 
 # Dejar las mismas variables que test
 train_hogares <- train_hogares %>%
-  select(-Ingtotug, -Ingtotugarr, 
-         -Ingpcug, -Indigente, 
-         -Npobres, -Nindigentes)
+  select(-Ingpcug, -Indigente, -Npobres, -Nindigentes)
 
 #Crear variable de test
 
 train_hogares <- train_hogares %>% mutate(test=0)
-test_hogares <- test_hogares %>% mutate(test=1)
-test_hogares <- test_hogares %>% mutate(Pobre=NA)
+test_hogares <- test_hogares %>% mutate(test=1) 
+test_hogares <- test_hogares %>% mutate(Pobre=NA, Ingtotugarr =NA, Ingtotug= NA)
 
 #Pegar ambas bases de hogares
 
