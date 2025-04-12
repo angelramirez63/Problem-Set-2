@@ -49,15 +49,13 @@ train_personas <- readRDS("train_personas.rds") %>%
 
 # Dejar las mismas variables que test
 train_hogares <- train_hogares %>%
-  select(-Ingtotug,-Ingpcug,
-         -Indigente, -Npobres, 
-         -Nindigentes)
+  select(-Ingpcug, -Indigente, -Npobres, -Nindigentes)
 
 #Crear variable de test
 
 train_hogares <- train_hogares %>% mutate(test=0)
 test_hogares <- test_hogares %>% mutate(test=1) 
-test_hogares <- test_hogares %>% mutate(Pobre=NA, Ingtotugarr =NA)
+test_hogares <- test_hogares %>% mutate(Pobre=NA, Ingtotugarr =NA, Ingtotug= NA)
 
 #Pegar ambas bases de hogares
 
