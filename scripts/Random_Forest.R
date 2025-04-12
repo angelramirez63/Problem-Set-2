@@ -83,6 +83,7 @@ trainRF <- trainRF %>%
 
 testRF <- testRF <- testRF %>% 
   mutate(
+    Pobre = factor(Pobre, levels = c(1,0), labels = c("Si", "No")),  #Dejar pobre como el primer nivel 
     cabecera = factor(cabecera, levels = c(1,2), labels = c("Cabecera", "Resto")), 
     prop_vivienda = factor(prop_vivienda, levels = c(1,2,3,4,5,6), 
                            labels = c("Propia_pagada", "Propia_pagando", 
@@ -145,7 +146,7 @@ ctrl<- trainControl(method = "cv",
 
 
 mtry_grid<-expand.grid(mtry = c(6, 8, 10, 30), # Fijar m = {6, 8, 10, 30}. Se toma sqrt(30) como benchmark, y 30 incluye bagging.
-                       min.node.size= c(10, 100, 500, 1000), #Controla la complejidad (profundidad) del arbol
+                       min.node.size= c(1, 10, 100, 500, 1000), #Controla la complejidad (profundidad) del arbol
                        splitrule= 'gini') # Tomamos gini como splitrule.
 mtry_grid
 
@@ -165,12 +166,45 @@ cv_RForest <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arrien
                     na.action = na.pass
                     )
 
-cv_RForest
+cv_RForest #Sugiere parámetros óptimos de mrty = 6, min node size = 1.
 
-#Observar importancia de variables
+#Ahora corremos el mejor modelo:
 
-variables_importantes_RF1 = varImp(cv_RForest)
+set.seed(1112) #Se fija semilla para reproducibilidad
 
+mejor_modelo1 <- ranger::ranger(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arriendo_hipotetico +
+    arriendo + Npersonas+ Nper_unidad_gasto + linea_indigencia + linea_pobreza +
+    t_horas_trabajadas + t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
+    t_gran_empresa + menor_15 + mayor_60 + mujer + edad + segur_social + segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
+    Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + p_cotiza_pension, #Se corre un RF clasificatorio con todas las variables disponibles creadas a partir de los datos a nivel persona, agrupados a nivel hogar.
+  data = trainRF,
+  num.trees = 500, #Hiperparámetros fijados a partir de los óptimos encontrados en el RF anterior.
+  mtry = 6,
+  min.node.size = 1,
+  importance = "impurity",
+  metric = "F1"
+)
+
+## Realizar predicciones en test
+prediccionesRF1 <- predict(mejor_modelo1, data = testRF)$predictions
+
+## Crear un dataframe con el id y las predicciones
+resultadosRF1 <- data.frame(
+  id = testRF$id,
+  prediccion = prediccionesRF1
+)
+
+# Convertir predicciones a 0 y 1
+pred_binarias <- ifelse(prediccionesRF1 == "Si", 1, 0)
+
+# Crear el dataframe final
+resultadosRF1 <- data.frame(
+  id = testRF$id,
+  prediction = pred_binarias
+)
+
+# Guardar el archivo CSV
+write.csv(resultadosRF1, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/Predicciones/RF_m6_minnode1.csv", row.names = FALSE)
 
 #Random Forest 2 ---------------------------------------------------------------
 
@@ -186,7 +220,6 @@ mejor_modelo <- ranger::ranger(
   metric = "F1"
 )
 
-
 ## Realizar predicciones en test
 predicciones <- predict(mejor_modelo, data = testRF)$predictions
 
@@ -196,7 +229,7 @@ resultados <- data.frame(
   prediccion = predicciones
 )
 
-write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/predicciones_5.csv", row.names = FALSE)
+write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/Predicciones/predicciones_5.csv", row.names = FALSE)
 
 #Random Forest 3 ---------------------------------------------------------------
 
