@@ -7,6 +7,8 @@ setwd("~/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores"
 
 rm(list = ls())
 
+install.packages("xtable") #Exportar resultados a LaTEX
+
 if(!require(pacman)) install.packages("pacman") ; require(pacman)
 
 
@@ -22,7 +24,8 @@ p_load(tidyverse,
        ggplot2,
        dplyr,
        ranger,
-       rio
+       rio,
+       xtable
 )
 
 ## Cargar datos ----------------------------------------------------------------
@@ -536,13 +539,16 @@ mejor_modelo4
 ## Realizar predicciones en test
 prediccionesRF4 <- predict(mejor_modelo4, data = testRF)$predictions
 
-## Crear un dataframe con el id y las predicciones
+## Convertir de "Si"/"No" a 1/0
+predicciones_binarias <- ifelse(prediccionesRF4 == "Si", 1, 0)
+
+## Crear un dataframe con el id y las predicciones binarias
 resultadosRF4 <- data.frame(
   id = testRF$id,
-  prediccion = prediccionesRF4
+  prediccion = predicciones_binarias
 )
 
-write.csv(resultadosRF2, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/Predicciones/RF4_m10_minnode1.csv", row.names = FALSE)
+write.csv(resultadosRF4, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/Predicciones/RF4_m10_minnode1.csv", row.names = FALSE)
 
 
 
