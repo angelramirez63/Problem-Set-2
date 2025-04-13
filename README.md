@@ -23,10 +23,12 @@ La carpeta de scripts contiene la solución del taller diferenciado, organizada 
 
 **Desarrollo de los puntos 3, 4 y 5:** Estos apartados están organizados en scripts independientes, numerados y nombrados según el tema que abordan.
 
-**Carpeta de scripts iniciales:** Finalmente, se incluye una carpeta con los scripts que cada miembro del equipo utilizó para comenzar a desarrollar el taller.
+**Carpeta de scripts iniciales:** Finalmente, se incluye la carpeta *Deprecated* con los scripts que cada miembro del equipo utilizó para comenzar a desarrollar el taller y posteriormente fueron remplazados por scripts consolidados después de un proceso de ajuste. 
 
 ## Stores
 Esta carpeta contiene las bases de datos utilizadas para la solución de los modelos. Incluye la base de datos original, llamada "datos_GEIH.rds", y la base de datos después del proceso de limpieza, denominada "datos_modelos.rds". Adicionalmente, se encuentran las bases de datos generadas mediante el método de Bootstrap con 1000 y 10000 iteraciones. Todos los archivos están almacenados en formato .rds para garantizar su compatibilidad y eficiencia en el manejo de la información.
+
+**Predicciones:** Se incluye una carpeta con las predicciones enviadas a Kaggle por los miembros del equipo. 
 
 ## Views
 Esta carpeta contiene las gráficas y tablas generadas en la solución del taller. Las gráficas están en formato PNG y las tablas en formato txt.
