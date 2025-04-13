@@ -125,6 +125,9 @@ desbalance_pobre_plot <- ggplot(train, aes(x = Pobre, fill = Pobre)) +
                           theme_minimal()
 desbalance_pobre_plot
 
+
+
+
 ##Estrategia para tratar el desbalance ------####
 #Hibrido: up y down sample
 
@@ -343,20 +346,58 @@ write.csv(predictSample,name, row.names = FALSE)
 #============================= Otras cosas =====================================
 
 
+#Tablas Métricas de desempeño --------------------------------------------------
+
+
+#Tabla métricas de desempeño (ROC Y F)
+"
+Profundidad árboles            Número de árboles      ROC          F     
+         4                      100                   0.9196988    0.8415896
+         4                      500                   0.9276243    0.8500464
+         5                      100                   0.9235149    0.8462672
+         5                      500                   0.9329009    0.8572333
+         6                      100                   0.9266338    0.8499312
+         6                      500                   0.9389917    0.8686682
+         7                      100                   0.9306383    0.8556029
+         7                      500                   0.9496558    0.8913321
+         8                      100                   0.9370613    0.8680074
+         8                      500                   0.9628395    0.9208548
+         8                      900                   0.9712878    0.9319328
+" 
+
+#Tabla métricas de desempeño (Solo F)
+" 
+Profundidad árboles            Número de árboles        F     
+         4                      100                     0.8415896
+         4                      500                     0.8500464
+         5                      100                     0.8462672
+         5                      500                     0.8572333
+         6                      100                     0.8499312
+         6                      500                     0.8686682
+         7                      100                     0.8556029
+         7                      500                     0.8913321
+         8                      100                     0.8680074
+         8                      500                     0.9208548
+         8                      900                     0.9319328
+
+"         
+         
+         
 #Variables en uso: 
-cabecera + Ncuartos + Ncuartos_duermen + prop_vivienda + 
+Ncuartos + Ncuartos_duermen + prop_vivienda + 
   arriendo_hipotetico + arriendo + Npersonas + Nper_unidad_gasto + 
-  linea_indigencia + linea_pobreza  + t_horas_trabajadas + 
+  linea_indigencia + linea_pobreza + t_horas_trabajadas + 
   t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
   t_gran_empresa + mujer + menor_15 + mayor_60 + edad + segur_social + 
   segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
   Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + p_cotiza_pension
 
 
+
 #Todas las variables que no son nzv
 id + cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda + 
   arriendo_hipotetico + arriendo + Npersonas + Nper_unidad_gasto + 
-  linea_indigencia + linea_pobreza + Depto + Pobre + t_horas_trabajadas + 
+  linea_indigencia + linea_pobreza + Depto  + t_horas_trabajadas + 
   t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
   t_gran_empresa + mujer + menor_15 + mayor_60 + edad + segur_social + 
   segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa 
