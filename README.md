@@ -3,7 +3,6 @@
 #### Juan Esteban Díaz Torres - 202020319
 #### Natalia Plata Ángel - 201730699
 #### Ángel David Ramírez Torres - 202112704
-#### Ángel David Ramírez Torres - 202112704
 #### Juan Pablo Grimaldos - 202122627
 
 ## Tabla de Contenidos
