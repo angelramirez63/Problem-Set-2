@@ -17,7 +17,7 @@ Esta carpeta contiene el archivo final con la solución del taller en formato pd
 ## Scripts
 La carpeta *Scripts* contiene el script utilizado para limpiar y procesar las bases de datos, el script utilizado para realizar la estadísticas descriptivas y cuatro script con la implentación de los algoritmos utilizados para predecir la pobreza de los hogares. A continuación, se detalla la estructura y contenido:
 
-- **Script de limpieza:** El archivo "1_Limpieza_Consolidado_v2.R" toma las bases de datos provistas como inputs para realizar el taller y realiza la imputacion de valores faltantes, tratamiento de valores extremos, limpieza de los datos y la consolidacion de las bases de entrenamiento y de testeo. 
+- **Script de limpieza:** El archivo "1_Limpieza_Consolidado_v2.R" toma las bases de datos provistas como inputs para realizar el taller y realiza la imputacion de valores faltantes, tratamiento de valores extremos, limpieza de los datos y la consolidacion de las bases de entrenamiento y de testeo a nivel de hogar. 
 
 
 - **Script de estadísticas descriptivas:** En el archivo "Poner_nombre.R" se realiza la revisión de las observaciones y las variables de interés y se generan las figuras y tablas que contienen las estadísticas descriptivas. 
@@ -27,7 +27,7 @@ La carpeta *Scripts* contiene el script utilizado para limpiar y procesar las ba
 - **Carpeta de scripts iniciales:** Finalmente, se incluye la carpeta *Deprecated* con los scripts que cada miembro del equipo utilizó para comenzar a desarrollar el taller y posteriormente fueron remplazados por scripts consolidados después de un proceso de ajuste. 
 
 ## Stores
-Esta carpeta contiene las bases de datos utilizadas para la solución de los modelos. Incluye la base de datos original, llamada "datos_GEIH.rds", y la base de datos después del proceso de limpieza, denominada "datos_modelos.rds". Adicionalmente, se encuentran las bases de datos generadas mediante el método de Bootstrap con 1000 y 10000 iteraciones. Todos los archivos están almacenados en formato .rds para garantizar su compatibilidad y eficiencia en el manejo de la información.
+Esta carpeta contiene las bases de datos provistas como insumos para realizar el taller (*train_personas.rds, train_hogares.csv, test_personas.csv, test_hogares.csv y sample_submission.csv*), la base datos *db_final.rds* consolidada usando el script *1_Limpieza_Consolidado_v2.R* y la carpeta *Predicciones*. Todos los archivos están almacenados en formato csv salvo *train_personas.rds* y *db_final.rds*. Se decidió cambiar el formato de estos archivos para poderlos subirlos a github y facilitar el trabajo. 
 
 - **Predicciones:** Se incluye una carpeta con las predicciones enviadas a Kaggle por los miembros del equipo. 
 
