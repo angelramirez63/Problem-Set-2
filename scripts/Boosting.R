@@ -125,8 +125,7 @@ desbalance_pobre_plot <- ggplot(train, aes(x = Pobre, fill = Pobre)) +
                           theme_minimal()
 desbalance_pobre_plot
 
-
-
+ggsave("views/desbalance_de_clases_pobre.png", width = 7, height = 6, dpi = 300)
 
 ##Estrategia para tratar el desbalance ------####
 #Hibrido: up y down sample
