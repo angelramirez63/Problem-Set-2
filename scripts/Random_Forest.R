@@ -186,6 +186,12 @@ cv_RForest1 <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arrie
 
 cv_RForest1 #Sugiere parámetros óptimos de mrty = 6, min node size = 1.
 
+# Exportar resultados
+
+tabla_CVRF1 <- xtable(cv_RForest1$results)
+print(tabla_CVRF1, file = "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest1_results.tex", include.rownames = FALSE)
+
+
 #Ahora corremos el mejor modelo:
 
 set.seed(1112) #Se fija semilla para reproducibilidad
@@ -288,9 +294,18 @@ cv_RForest2 #mrty óptimo de 6
 
 # Exportar resultados
 
-tabla_CVRF2 <- xtable(cv_RForest2$results)
-print(tabla_CVRF2, file = "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest2_results.tex", include.rownames = FALSE)
+# Filtrar solo las columnas que te interesan
+cols_interes <- c("mtry", "min.node.size", "splitrule", "ROC", "Sens", "Spec", "Accuracy")
+cv_RForest2_filtrado <- cv_RForest2$results[, cols_interes]
 
+# Crear la tabla
+tabla_CVRF2 <- xtable(cv_RForest2_filtrado)
+
+# Imprimir con más decimales (4 en este caso)
+print(tabla_CVRF2,
+      file = "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest2_results.tex",
+      include.rownames = FALSE,
+      digits = c(0, 2, 2, 0, 4, 4, 4, 4))  # ajustado para las columnas seleccionadas
 
 #Correr ranger 
 
@@ -402,10 +417,18 @@ cv_RForest3 <- train(Pobre~Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda
 
 cv_RForest3
 
-# Exportar resultados
+# Filtrar columnas de interés
+cols_interes <- c("mtry", "min.node.size", "splitrule", "ROC", "Sens", "Spec", "Accuracy")
+cv_RForest3_filtrado <- cv_RForest3$results[, cols_interes]
 
-tabla_CVRF3 <- xtable(cv_RForest3$results)
-print(tabla_CVRF4, file = "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest3_results.tex", include.rownames = FALSE)
+# Crear tabla xtable
+tabla_CVRF3 <- xtable(cv_RForest3_filtrado)
+
+# Exportar con mayor precisión decimal
+print(tabla_CVRF3,
+      file = "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest3_results.tex",
+      include.rownames = FALSE,
+      digits = c(0, 2, 2, 0, 4, 4, 4, 4))
 
 
 # El hiperparámetro escogido es 10, como identificado por el CV anterior.
@@ -505,9 +528,18 @@ cv_RForest4 #mrty óptimo = 10
 
 # Exportar resultados
 
-tabla_CVRF4 <- xtable(cv_RForest4$results)
-print(tabla_CVRF4, file = "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest4_results.tex", include.rownames = FALSE)
+# Filtrar columnas relevantes
+cols_interes <- c("mtry", "min.node.size", "splitrule", "ROC", "Sens", "Spec", "Accuracy")
+cv_RForest4_filtrado <- cv_RForest4$results[, cols_interes]
 
+# Crear tabla xtable
+tabla_CVRF4 <- xtable(cv_RForest4_filtrado)
+
+# Exportar tabla con precisión de 4 decimales
+print(tabla_CVRF4,
+      file = "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest4_results.tex",
+      include.rownames = FALSE,
+      digits = c(0, 2, 2, 0, 4, 4, 4, 4))
 
 #Correr ranger
 
