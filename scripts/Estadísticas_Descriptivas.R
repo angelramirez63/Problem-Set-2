@@ -193,12 +193,16 @@ writeLines(latex_table, "/Users/juanpablogrimaldos/Documents/Documentos - MacBoo
 # Otras Observaciones (Desbalance Clases) --------------------------------------
 
 # Gráfico para visualizar la distribución de Pobres
+
 ggplot(trainRF, aes(x = Pobre, fill = Pobre)) +
   geom_bar() + 
   theme_minimal() +
   scale_fill_manual(values = c("Si" = "orange", "No"= "blue")) +
-  labs(x = "", y = "# de Personas")
-
+  labs(
+    title = "Desbalance de Clases - Variable Pobre",
+    x = "",
+    y = "# de Personas"
+  )
 # Revisar calsificación DANE
 
 table(trainRF$Pobre)
