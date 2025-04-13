@@ -15,9 +15,10 @@
 Esta carpeta contiene el archivo final con la solución del taller en formato pdf y en formato Tex.
 
 ## Scripts
-La carpeta de scripts contiene la solución del taller diferenciado, organizada en un script por sección, junto con una carpeta adicional que incluye los scripts de prueba. A continuación, se detalla la estructura y contenido:
+La carpeta *Scripts* contiene el script utilizado para limpiar y procesar las bases de datos y cuatro script con la implentación de los algoritmos utilizados para predecr la pobreza de los hogares. A continuación, se detalla la estructura y contenido:
 
-**Script de limpieza:** El archivo "1_Data_cleaning.R" se encarga del procesamiento de los datos desde su descarga inicial.
+- **Script de limpieza:** El archivo "1_Limpieza_Consolidado_v2.R" toma las bases de datos provistas como inputs para realizar el taller y realiza la imputacion de valores faltantes, tratamiento de valores extremos, limpieza de los datos y la consolidacion de las bases de entrenamiento y de testeo. 
+
 
 **Script de estadísticas descriptivas:** En el archivo "2_descriptive_statistics.R" se realiza la revisión de las observaciones y las variables de interés.
 
