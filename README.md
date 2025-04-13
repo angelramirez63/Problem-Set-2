@@ -29,15 +29,14 @@ La carpeta *Scripts* contiene el script utilizado para limpiar y procesar las ba
 ## Stores
 Esta carpeta contiene las bases de datos provistas como insumos para realizar el taller (*train_personas.rds, train_hogares.csv, test_personas.csv, test_hogares.csv y sample_submission.csv*), la base datos *db_final.rds* consolidada usando el script *1_Limpieza_Consolidado_v2.R* y la carpeta *Predicciones*. Todos los archivos están almacenados en formato csv salvo *train_personas.rds* y *db_final.rds*. Se decidió cambiar el formato de estos archivos para poderlos subirlos a github y facilitar el trabajo. 
 
-- **Predicciones:** Se incluye una carpeta con las predicciones enviadas a Kaggle por los miembros del equipo. 
+- **Predicciones:** Se incluye una carpeta con las predicciones enviadas a Kaggle por los miembros del equipo. Estas predicciones están en formato .csv 
 
 ## Views
-Esta carpeta contiene las gráficas y tablas generadas en la solución del taller. Las gráficas están en formato PNG y las tablas en formato txt.
+Esta carpeta contiene las gráficas y tablas generadas en la solución del taller y que se encuentran en el documento final. Las gráficas están en formato PNG y las tablas en formato tet.
 
 ### Gráficas (formato PNG):
-**desempeño_validation_set.png:** Gráfica que muestra el desempeño del modelo en el conjunto de validación.
+**desbalance_de_clases.png:** Gráfica que muestra la proporcion de pobres (Sí) y no pobres (No) en la base de datos de entrenmaiento para la variables Pobre. Esta gráfica se realizo para caracterizar el desbalance de clases en está variable. 
 
-**dinamica_promedio_salario_por_hora_con_la_edad:** Gráfica que ilustra la dinámica del salario promedio en función de la edad diferenciado por género.
 
 **distribucion_errores.png:** Gráfica que representa la distribución de los errores del modelo.
 
@@ -50,9 +49,9 @@ Esta carpeta contiene las gráficas y tablas generadas en la solución del talle
 **y_ingLab_m_ha.png:** Gráfica que posiblemente muestra ingresos laborales en función de alguna variable (el nombre completo no está especificado).
 
 ### Tablas (formato TXT):
-**desc_est.txt:** Tabla con estadísticas descriptivas de los datos.
+**cv_Adaboost_Performance_Metrics.tex:** Tabla con los F_score obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del modelo Adaboost 
 
-**mod1.txt:** Tabla que contiene los resultados o parámetros del primer modelo.
+**cv_RForest1_results.tex:** Tabla con los resultados de varias métricas de desempeño obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del modelo Random Forest. 
 
 **tabla_comparacion_errores_prediccion.txt:** Tabla que compara los errores de predicción de las dififerentes aproximaciones.
 
