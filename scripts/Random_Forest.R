@@ -1,10 +1,13 @@
 #Random Forest  ----------------------------------------------------------------
+## Ángel y Juan Pablo
 
 setwd("~/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores")
 
 #-------------------------------------------------------------------------------
 
 rm(list = ls())
+
+install.packages("xtable") #Exportar resultados a LaTEX
 
 if(!require(pacman)) install.packages("pacman") ; require(pacman)
 
@@ -21,10 +24,9 @@ p_load(tidyverse,
        ggplot2,
        dplyr,
        ranger,
-       rio
+       rio,
+       xtable
 )
-
-## Ángel y Juan Pablo
 
 ## Cargar datos ----------------------------------------------------------------
 
@@ -81,6 +83,12 @@ trainRF <- trainRF %>%
                               "Sucre", "Tolima", "Valle del Cauca"))
   )
 
+trainRF <- trainRF %>% mutate(
+  p_cotiza_pension = ifelse(is.na(p_cotiza_pension == T), 0, p_cotiza_pension), 
+  pensionado = ifelse(is.na(pensionado == T), 0, pensionado), 
+  t_cotiza_pension = ifelse(is.na(t_cotiza_pension == T), 0, t_cotiza_pension)
+)
+
 testRF <- testRF <- testRF %>% 
   mutate(
     Pobre = factor(Pobre, levels = c(1,0), labels = c("Si", "No")),  #Dejar pobre como el primer nivel 
@@ -101,6 +109,12 @@ testRF <- testRF <- testRF %>%
                               "Sucre", "Tolima", "Valle del Cauca"))
   )
 
+testRF <- testRF %>% mutate(
+  p_cotiza_pension = ifelse(is.na(p_cotiza_pension == T), 0, p_cotiza_pension), 
+  pensionado = ifelse(is.na(pensionado == T), 0, pensionado), 
+  t_cotiza_pension = ifelse(is.na(t_cotiza_pension == T), 0, t_cotiza_pension)
+)
+
 
 #Revisar variables cuya varianza sea casi 0 y removerlas.
 
@@ -108,7 +122,7 @@ zero_var_check <- nearZeroVar(trainRF, saveMetrics = T, names = T)
 zero_var_check <- zero_var_check %>% 
   filter(nzv == TRUE)
 
-trainRF <- trainRF %>%  #Remover variables  con casi nzr (near zero variance)
+trainRF2 <- trainRF %>%  #Remover variables  con casi nzr (near zero variance)
   select(-credit_vivienda_mes, -t_bonificaciones_anuales, 
          -t_horas_empleo_secundario, -quiere_trabajar_mas, 
          -pensionado, -t_ingxhorasextra, -t_primas, -t_bonificaciones, 
@@ -122,6 +136,10 @@ trainRF <- trainRF %>%  #Remover variables  con casi nzr (near zero variance)
          -p_ingresosextraespecie)
 
 rm(zero_var_check)
+
+
+
+
 
 #Random Forest 1 ---------------------------------------------------------------
 
@@ -152,7 +170,7 @@ mtry_grid
 
 
 
-cv_RForest <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arriendo_hipotetico +
+cv_RForest1 <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arriendo_hipotetico +
                      arriendo + Npersonas+ Nper_unidad_gasto + linea_indigencia + linea_pobreza +
                       t_horas_trabajadas + t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
                       t_gran_empresa + menor_15 + mayor_60 + mujer + edad + segur_social + segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
@@ -160,13 +178,13 @@ cv_RForest <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arrien
                     data = trainRF, 
                     method = "ranger", # llamamos el paquete del metodo a utilizar
                     trControl = ctrl,
-                    metric="F1", # metrica a optimizar
+                    metric="F", # metrica a optimizar
                     tuneGrid = mtry_grid,
                     ntree=500,
                     na.action = na.pass
                     )
 
-cv_RForest #Sugiere parámetros óptimos de mrty = 6, min node size = 1.
+cv_RForest1 #Sugiere parámetros óptimos de mrty = 6, min node size = 1.
 
 #Ahora corremos el mejor modelo:
 
@@ -177,12 +195,12 @@ mejor_modelo1 <- ranger::ranger(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivie
     t_horas_trabajadas + t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
     t_gran_empresa + menor_15 + mayor_60 + mujer + edad + segur_social + segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
     Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + p_cotiza_pension, #Se corre un RF clasificatorio con todas las variables disponibles creadas a partir de los datos a nivel persona, agrupados a nivel hogar.
-  data = trainRF,
+  data = trainRF2,
   num.trees = 500, #Hiperparámetros fijados a partir de los óptimos encontrados en el RF anterior.
   mtry = 6,
   min.node.size = 1,
   importance = "impurity",
-  metric = "F1"
+  metric = "F"
 )
 
 ## Realizar predicciones en test
@@ -204,34 +222,354 @@ resultadosRF1 <- data.frame(
 )
 
 # Guardar el archivo CSV
-write.csv(resultadosRF1, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/Predicciones/RF_m6_minnode1.csv", row.names = FALSE)
+write.csv(resultadosRF1, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/Predicciones/RF1_m6_minnode1.csv", row.names = FALSE)
+
+
+
+
+
 
 #Random Forest 2 ---------------------------------------------------------------
 
+fiveStats <- function(...) {
+  c(
+    caret::twoClassSummary(...), # Returns ROC, Sensitivity, and Specificity
+    caret::defaultSummary(...)  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
+  )
+}
+
 set.seed(1112) #Se fija semilla para reproducibilidad
 
-mejor_modelo <- ranger::ranger(
-  Pobre ~ ., #Se corre un RF clasificatorio con todas las variables disponibles creadas a partir de los datos a nivel persona, agrupados a nivel hogar.
+
+# Escogemos grilla y método
+
+ctrl<- trainControl(method = "cv",
+                    number = 5,
+                    summaryFunction = fiveStats,
+                    classProbs = TRUE,
+                    verbose=T,
+                    savePredictions = T)
+
+mtry_grid<-expand.grid(mtry =c(6, 8, 9, 10),
+                       min.node.size = 1, #controla la complejidad del arbol
+                       splitrule= 'gini') # tomamos gini como splitrule 
+
+# Calculamos hiperparámetros
+cv_RForest2 <- train(Pobre~cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda + 
+                      credit_vivienda_mes + arriendo_hipotetico + arriendo + Npersonas + 
+                      Nper_unidad_gasto + linea_indigencia + linea_pobreza + factor_exp + Depto + 
+                      factor_ex_dep + t_prima_servicios + t_prima_navidad + 
+                      t_prima_vacaciones + t_bonificaciones_anuales + t_horas_trabajadas + 
+                      t_cotiza_pension + t_empleo_secundario + t_horas_empleo_secundario + 
+                      quiere_trabajar_mas + pensionado + t_trabaja_solo + t_microempresa + 
+                      t_pequeña_empresa + t_mediana_empresa + t_gran_empresa + t_ingxhorasextra + 
+                      t_primas + t_bonificaciones + t_subsalimentacion + t_substransporte + 
+                      t_subsfamiliar + t_subseduc + t_alimentosextra + t_viviendapago + 
+                      t_transporteempresa + t_ingresosextraespecie + mujer + menor_15 + mayor_60 + 
+                      edad + segur_social + segur_subsidiado + P_Ed_Preescolar + P_Ed_Basica_primaria + 
+                      P_Ed_Basica_secundaria + P_Ed_Media + P_Ed_Superior + grado_esc_promedio + 
+                      t_tiempo_empresa + Ocupados + Desempleados + Inactivos + Pet + 
+                      p_recibe_pagos_arriendo + p_recibe_ingresos_ad + p_ocupados + p_desempleados + 
+                      p_inactivos + p_pet + p_prima_servicios + p_prima_navidad + p_prima_vacaciones + 
+                      p_bonificaciones_anuales + p_horas_trabajadas + p_cotiza_pension + 
+                      p_empleo_secundario + p_horas_empleo_secundario + p_trabaja_solo + 
+                      p_microempresa + p_pequeña_empresa + p_mediana_empresa + p_gran_empresa + 
+                      p_ingxhorasextra + p_primas + p_bonificaciones + p_subsalimentacion + 
+                      p_substransporte + p_subsfamiliar + p_subseduc + p_alimentosextra + 
+                      p_viviendapago + p_transporteempresa + p_ingresosextraespecie + p_tiempo_empresa,
+                    data = trainRF, 
+                    method = "ranger", # llamamos el paquete del metodo a utilizar
+                    trControl = ctrl,
+                    metric="F", # metrica a optimizar
+                    tuneGrid = mtry_grid,
+                    ntree=500)
+
+cv_RForest2 #mrty óptimo de 6
+
+#Correr ranger 
+
+mejor_modelo2 <- ranger::ranger(
+  Pobre~cabecera + Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda + 
+    credit_vivienda_mes + arriendo_hipotetico + arriendo + Npersonas + 
+    Nper_unidad_gasto + linea_indigencia + linea_pobreza + factor_exp + Depto + 
+    factor_ex_dep + t_prima_servicios + t_prima_navidad + 
+    t_prima_vacaciones + t_bonificaciones_anuales + t_horas_trabajadas + 
+    t_cotiza_pension + t_empleo_secundario + t_horas_empleo_secundario + 
+    quiere_trabajar_mas + pensionado + t_trabaja_solo + t_microempresa + 
+    t_pequeña_empresa + t_mediana_empresa + t_gran_empresa + t_ingxhorasextra + 
+    t_primas + t_bonificaciones + t_subsalimentacion + t_substransporte + 
+    t_subsfamiliar + t_subseduc + t_alimentosextra + t_viviendapago + 
+    t_transporteempresa + t_ingresosextraespecie + mujer + menor_15 + mayor_60 + 
+    edad + segur_social + segur_subsidiado + P_Ed_Preescolar + P_Ed_Basica_primaria + 
+    P_Ed_Basica_secundaria + P_Ed_Media + P_Ed_Superior + grado_esc_promedio + 
+    t_tiempo_empresa + Ocupados + Desempleados + Inactivos + Pet + 
+    p_recibe_pagos_arriendo + p_recibe_ingresos_ad + p_ocupados + p_desempleados + 
+    p_inactivos + p_pet + p_prima_servicios + p_prima_navidad + p_prima_vacaciones + 
+    p_bonificaciones_anuales + p_horas_trabajadas + p_cotiza_pension + 
+    p_empleo_secundario + p_horas_empleo_secundario + p_trabaja_solo + 
+    p_microempresa + p_pequeña_empresa + p_mediana_empresa + p_gran_empresa + 
+    p_ingxhorasextra + p_primas + p_bonificaciones + p_subsalimentacion + 
+    p_substransporte + p_subsfamiliar + p_subseduc + p_alimentosextra + 
+    p_viviendapago + p_transporteempresa + p_ingresosextraespecie + p_tiempo_empresa,
   data = trainRF,
-  num.trees = 500, #Hiperparámetros fijados a partir de los óptimos encontrados en el RF anterior.
-  mtry = 10,
-  min.node.size = 10,
-  importance = "impurity",
-  metric = "F1"
-)
+  num.trees= 500, ## Numero de bootstrap samples y arboles a estimar. Default 500  
+  mtry= 6,   # N. var aleatoriamente seleccionadas en cada partición
+  min.node.size  = 1, ## Numero minimo de observaciones en un nodo
+  importance="impurity") 
+
+mejor_modelo2
 
 ## Realizar predicciones en test
-predicciones <- predict(mejor_modelo, data = testRF)$predictions
+prediccionesRF2 <- predict(mejor_modelo2, data = testRF)$predictions
 
 ## Crear un dataframe con el id y las predicciones
-resultados <- data.frame(
+resultadosRF2 <- data.frame(
   id = testRF$id,
-  prediccion = predicciones
+  prediccion = prediccionesRF2
 )
 
-write.csv(resultados, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/Predicciones/predicciones_5.csv", row.names = FALSE)
+write.csv(resultadosRF2, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/Predicciones/RF2_m6_minnode1.csv", row.names = FALSE)
+
+
+
+
 
 #Random Forest 3 ---------------------------------------------------------------
+
+#Importancia de variables 
+
+variables_importantes_RF2 = mejor_modelo2$variable.importance
+
+datos_impRF2 <- data.frame(variables = names(variables_importantes_RF2), importance = variables_importantes_RF2)
+
+
+ggplot(datos_impRF2, aes(x = reorder(variables, importance) , y =importance )) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(title = "Importancia con `ranger` para RF2 ", x = "Importance", y="Variable") +
+  theme_minimal() +
+  coord_flip() 
+
+#PARA ESTE MODELO, FILTRAMOS PARA VARIABLES CON MÁS DE 500 DE IMPORTANCIA
+
+# Filtrar las variables con importancia mayor a 500
+variables_muy_importantes <- subset(datos_impRF2, importance > 500)
+
+# Mostrar
+print(variables_muy_importantes)
+
+
+# Se usó CV-K5 para optimizar el hiperparámetro de variables escogidas
+# entre 6, 8, 9 o 10 con un mínimo de observaciones por hoja igual a 1
+
+set.seed(0879)
+
+# Escogemos grilla y método
+ctrl<- trainControl(method = "cv",
+                    number = 5,
+                    summaryFunction = fiveStats,
+                    classProbs = TRUE,
+                    verbose=T,
+                    savePredictions = T)
+
+mtry_grid<-expand.grid(mtry =c(6, 8, 9, 10),
+                       min.node.size = 1, #controla la complejidad del arbol
+                       splitrule= 'gini') # tomamos gini como splitrule 
+
+# Calculamos hiperparámetros
+cv_RForest3 <- train(Pobre~Dominio + Ncuartos + Ncuartos_duermen + prop_vivienda + arriendo_hipotetico + 
+                      arriendo + Npersonas + Nper_unidad_gasto + linea_indigencia + linea_pobreza + 
+                      factor_exp + Depto + factor_ex_dep + t_prima_servicios + t_horas_trabajadas + 
+                      t_cotiza_pension + quiere_trabajar_mas + t_trabaja_solo + t_microempresa + 
+                      t_gran_empresa + t_substransporte + mujer + menor_15 + mayor_60 + edad + 
+                      segur_social + segur_subsidiado + P_Ed_Basica_primaria + P_Ed_Basica_secundaria + 
+                      P_Ed_Media + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + Ocupados + 
+                      Desempleados + Inactivos + Pet + p_recibe_pagos_arriendo + p_recibe_ingresos_ad + 
+                      p_ocupados + p_desempleados + p_inactivos + p_pet + p_prima_servicios + 
+                      p_horas_trabajadas + p_cotiza_pension + p_trabaja_solo + p_microempresa + 
+                      p_gran_empresa + p_substransporte + p_tiempo_empresa, 
+                    data = trainRF, 
+                    method = "ranger", # llamamos el paquete del metodo a utilizar
+                    trControl = ctrl,
+                    metric="F", # metrica a optimizar
+                    tuneGrid = mtry_grid,
+                    ntree=500)
+
+cv_RForest3
+
+
+# El hiperparámetro escogido es 10, como identificado por el CV anterior.
+
+mejor_modelo3<- ranger::ranger(
+  Pobre~p_ocupados + arriendo_hipotetico + edad + segur_subsidiado + menor_15 + 
+    t_horas_trabajadas + p_recibe_pagos_arriendo + p_horas_trabajadas + 
+    factor_exp + factor_ex_dep + linea_pobreza + linea_indigencia + 
+    P_Ed_Superior + t_tiempo_empresa + p_tiempo_empresa + Nper_unidad_gasto + 
+    Npersonas + arriendo + Depto + p_cotiza_pension + grado_esc_promedio + 
+    Dominio + Ncuartos + mujer + prop_vivienda + t_cotiza_pension + 
+    P_Ed_Basica_primaria + t_prima_servicios + p_prima_servicios + 
+    p_inactivos + p_recibe_ingresos_ad + P_Ed_Basica_secundaria + 
+    Inactivos + P_Ed_Media + segur_social + Ocupados,
+  data = trainRF,
+  num.trees= 500, ## Numero de bootstrap samples y arboles a estimar. Default 500  
+  mtry= 10,   # N. var aleatoriamente seleccionadas en cada partición
+  min.node.size  = 1, ## Numero minimo de observaciones en un nodo
+  importance="impurity")
+
+mejor_modelo3
+
+
+## Realizar predicciones en test
+prediccionesRF3 <- predict(mejor_modelo3, data = testRF)$predictions
+
+## Crear un dataframe con el id y las predicciones
+resultadosRF3 <- data.frame(
+  id = testRF$id,
+  prediccion = prediccionesRF3
+)
+
+write.csv(resultadosRF3, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/Predicciones/RF3_m10_minnode1.csv", row.names = FALSE)
+
+
+
+
+
+
+#Random Forest 4 ---------------------------------------------------------------
+
+#Importancia de variables 
+
+#PARA ESTE MODELO, FILTRAMOS PARA VARIABLES CON MÁS DE 250 DE IMPORTANCIA
+
+# Filtrar las variables con importancia mayor a 250
+variables_muy_importantes <- subset(datos_impRF2, importance > 250)
+
+# Mostrar
+print(variables_muy_importantes)
+
+#Validación cruzada con variables más importantes
+
+fiveStats <- function(...) {
+  c(
+    caret::twoClassSummary(...), # Returns ROC, Sensitivity, and Specificity
+    caret::defaultSummary(...)  # Returns RMSE and R-squared (for regression) or Accuracy and Kappa (for classification)
+  )
+}
+
+ctrl<- trainControl(method = "cv",
+                    number = 5,
+                    summaryFunction = fiveStats,
+                    classProbs = TRUE,
+                    verbose=FALSE,
+                    savePredictions = T)
+
+mtry_grid<-expand.grid(mtry =c(6,8,9,10), 
+                       min.node.size= 1, #controla la complejidad del arbol
+                       splitrule= 'gini') # tomamos gini como splitrule 
+mtry_grid
+
+set.seed(1112) #Se fija semilla para reproducibilidad
+
+
+cv_RForest4 <- train(Pobre ~   Ncuartos + Ncuartos_duermen + prop_vivienda + 
+                       arriendo_hipotetico + arriendo + Npersonas + Nper_unidad_gasto + 
+                       linea_indigencia + linea_pobreza + factor_exp + Depto + factor_ex_dep + 
+                       t_prima_servicios + t_horas_trabajadas + t_cotiza_pension + Dominio +
+                       quiere_trabajar_mas + t_trabaja_solo + t_microempresa + t_gran_empresa + 
+                       t_substransporte + mujer + menor_15 + mayor_60 + edad + segur_social + 
+                       segur_subsidiado + P_Ed_Basica_primaria + P_Ed_Basica_secundaria + 
+                       P_Ed_Media + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
+                       Ocupados + Desempleados + Inactivos + Pet + p_recibe_pagos_arriendo + 
+                       p_recibe_ingresos_ad + p_ocupados + p_desempleados + p_inactivos + 
+                       p_pet + p_prima_servicios + p_horas_trabajadas + p_cotiza_pension + 
+                       p_trabaja_solo + p_microempresa + p_gran_empresa + p_substransporte + 
+                       p_tiempo_empresa, 
+                    data = trainRF, 
+                    method = "ranger", # llamamos el paquete del metodo a utilizar
+                    trControl = ctrl,
+                    metric="F", # metrica a optimizar
+                    tuneGrid = mtry_grid,
+                    ntree=1000)
+
+cv_RForest4 #mrty óptimo = 10
+
+#Correr ranger
+
+set.seed(1112) #Se fija semilla para reproducibilidad
+
+mejor_modelo4 <- ranger::ranger(
+  Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + 
+    arriendo_hipotetico + arriendo + Npersonas + Nper_unidad_gasto + 
+    linea_indigencia + linea_pobreza + factor_exp + Depto + factor_ex_dep + 
+    t_prima_servicios + t_horas_trabajadas + t_cotiza_pension + 
+    quiere_trabajar_mas + t_trabaja_solo + t_microempresa + t_gran_empresa + 
+    t_substransporte + mujer + menor_15 + mayor_60 + edad + segur_social + 
+    segur_subsidiado + P_Ed_Basica_primaria + P_Ed_Basica_secundaria + 
+    P_Ed_Media + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
+    Ocupados + Desempleados + Inactivos + Pet + p_recibe_pagos_arriendo + 
+    p_recibe_ingresos_ad + p_ocupados + p_desempleados + p_inactivos + 
+    p_pet + p_prima_servicios + p_horas_trabajadas + p_cotiza_pension + 
+    p_trabaja_solo + p_microempresa + p_gran_empresa + p_substransporte + 
+    p_tiempo_empresa, #Se corre un RF clasificatorio con todas las variables disponibles creadas a partir de los datos a nivel persona, agrupados a nivel hogar.
+  data = trainRF,
+  num.trees = 1000, #Hiperparámetros fijados a partir de los óptimos encontrados en el RF anterior.
+  mtry = 10,
+  min.node.size = 1,
+  importance = "impurity",
+)
+
+mejor_modelo4
+
+## Realizar predicciones en test
+prediccionesRF4 <- predict(mejor_modelo4, data = testRF)$predictions
+
+## Convertir de "Si"/"No" a 1/0
+predicciones_binarias <- ifelse(prediccionesRF4 == "Si", 1, 0)
+
+## Crear un dataframe con el id y las predicciones binarias
+resultadosRF4 <- data.frame(
+  id = testRF$id,
+  prediccion = predicciones_binarias
+)
+
+write.csv(resultadosRF4, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/stores/Predicciones/RF4_m10_minnode1.csv", row.names = FALSE)
+
+
+
+
+#Exportar tablas Validación Cruzada --------------------------------------------
+
+library(stargazer)
+
+# Función para exportar resultados con stargazer
+exportar_cv_stargazer <- function(cv_result, nombre_archivo) {
+  # Filtrar columnas de interés
+  df <- cv_result$results[, c("mtry", "min.node.size", "splitrule", "ROC", "Sens", "Spec", "Accuracy")]
+  
+  # Redondear columnas numéricas
+  metricas <- c("ROC", "Sens", "Spec", "Accuracy")
+  for (m in metricas) {
+    df[[m]] <- round(as.numeric(df[[m]]), 4)
+  }
+  
+  # Exportar con stargazer
+  stargazer(df, summary = FALSE, rownames = FALSE,
+            out = nombre_archivo)
+}
+
+# Exportar resultados
+exportar_cv_stargazer(cv_RForest1, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest1_results.tex")
+exportar_cv_stargazer(cv_RForest2, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest2_results.tex")
+exportar_cv_stargazer(cv_RForest3, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest3_results.tex")
+exportar_cv_stargazer(cv_RForest4, "/Users/juanpablogrimaldos/Documents/Documentos - MacBook Pro de Juan/GitHub/Problem-Set-2/views/cv_RForest4_results.tex")
+
+
+
+
+
+
+
+
+#Random Forest 5 ---------------------------------------------------------------
 
 #El siguiente modelo RF reduce los parámetros de la regresión a estimar a través de Elastic Net.
 
@@ -246,12 +584,31 @@ fitControl <- trainControl(
 
 lambda <- 10^seq(1, -4, length = 100)  # Genera una secuencia de valores de lambda para la regularización
 
+#Sin variable dominio
 
-model_form1 <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arriendo_hipotetico +
-                       arriendo + Npersonas+ Nper_unidad_gasto + linea_indigencia + linea_pobreza +
-                       t_horas_trabajadas + t_trabaja_solo + t_microempresa + t_pequeña_empresa + t_mediana_empresa + 
-                       t_gran_empresa + menor_15 + mayor_60 + mujer + edad + segur_social + segur_subsidiado + P_Ed_Superior + grado_esc_promedio + t_tiempo_empresa + 
-                       Ocupados + Desempleados + Inactivos + Pet + p_horas_trabajadas + p_cotiza_pension, 
+
+model_form1 <- train(Pobre ~ cabecera  + Ncuartos + Ncuartos_duermen + prop_vivienda + 
+                       credit_vivienda_mes + arriendo_hipotetico + arriendo + Npersonas + 
+                       Nper_unidad_gasto + linea_indigencia + linea_pobreza + factor_exp + Depto + 
+                       factor_ex_dep + t_prima_servicios + t_prima_navidad + 
+                       t_prima_vacaciones + t_bonificaciones_anuales + t_horas_trabajadas + 
+                       t_cotiza_pension + t_empleo_secundario + t_horas_empleo_secundario + 
+                       quiere_trabajar_mas + pensionado + t_trabaja_solo + t_microempresa + 
+                       t_pequeña_empresa + t_mediana_empresa + t_gran_empresa + t_ingxhorasextra + 
+                       t_primas + t_bonificaciones + t_subsalimentacion + t_substransporte + 
+                       t_subsfamiliar + t_subseduc + t_alimentosextra + t_viviendapago + 
+                       t_transporteempresa + t_ingresosextraespecie + mujer + menor_15 + mayor_60 + 
+                       edad + segur_social + segur_subsidiado + P_Ed_Preescolar + P_Ed_Basica_primaria + 
+                       P_Ed_Basica_secundaria + P_Ed_Media + P_Ed_Superior + grado_esc_promedio + 
+                       t_tiempo_empresa + Ocupados + Desempleados + Inactivos + Pet + 
+                       p_recibe_pagos_arriendo + p_recibe_ingresos_ad + p_ocupados + p_desempleados + 
+                       p_inactivos + p_pet + p_prima_servicios + p_prima_navidad + p_prima_vacaciones + 
+                       p_bonificaciones_anuales + p_horas_trabajadas + p_cotiza_pension + 
+                       p_empleo_secundario + p_horas_empleo_secundario + p_trabaja_solo + 
+                       p_microempresa + p_pequeña_empresa + p_mediana_empresa + p_gran_empresa + 
+                       p_ingxhorasextra + p_primas + p_bonificaciones + p_subsalimentacion + 
+                       p_substransporte + p_subsfamiliar + p_subseduc + p_alimentosextra + 
+                       p_viviendapago + p_transporteempresa + p_ingresosextraespecie + p_tiempo_empresa, 
   data = trainRF,
   metric = 'F1',
   method = 'glmnet',
@@ -262,7 +619,3 @@ model_form1 <- train(Pobre ~ Ncuartos + Ncuartos_duermen + prop_vivienda + arrie
                                      lambda=lambda)
       )
 )
-
-  
-
-
