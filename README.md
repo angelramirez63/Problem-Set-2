@@ -36,7 +36,7 @@ Esta carpeta contiene las gráficas y tablas generadas en la solución del talle
 
 ### Gráficas (formato PNG):
 
--**desbalance_de_clases.png:** Gráfica que muestra la proporcion de pobres (Sí) y no pobres (No) en la base de datos de entrenmaiento para la variables Pobre. Esta gráfica se realizo para caracterizar el desbalance de clases en está variable. 
+- **desbalance_de_clases.png:** Gráfica que muestra la proporcion de pobres (Sí) y no pobres (No) en la base de datos de entrenmaiento para la variables Pobre. Esta gráfica se realizo para caracterizar el desbalance de clases en está variable. 
 
 **distribucion_errores.png:** Gráfica que representa la distribución de los errores del modelo.
 
@@ -49,9 +49,9 @@ Esta carpeta contiene las gráficas y tablas generadas en la solución del talle
 **y_ingLab_m_ha.png:** Gráfica que posiblemente muestra ingresos laborales en función de alguna variable (el nombre completo no está especificado).
 
 ### Tablas (formato TXT):
--**cv_Adaboost_Performance_Metrics.tex:** Tabla con los F_score obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del modelo Adaboost 
+- **cv_Adaboost_Performance_Metrics.tex:** Tabla con los F_score obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del modelo Adaboost 
 
--**cv_RForest1_results.tex:** Tabla con los resultados de varias métricas de desempeño obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del modelo Random Forest. 
+- **cv_RForest1_results.tex:** Tabla con los resultados de varias métricas de desempeño obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del modelo Random Forest. 
 
 **tabla_comparacion_errores_prediccion.txt:** Tabla que compara los errores de predicción de las dififerentes aproximaciones.
 
