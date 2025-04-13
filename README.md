@@ -15,21 +15,21 @@
 Esta carpeta contiene el archivo final con la solución del taller en formato pdf y en formato Tex.
 
 ## Scripts
-La carpeta *Scripts* contiene el script utilizado para limpiar y procesar las bases de datos y cuatro script con la implentación de los algoritmos utilizados para predecr la pobreza de los hogares. A continuación, se detalla la estructura y contenido:
+La carpeta *Scripts* contiene el script utilizado para limpiar y procesar las bases de datos, el script utilizado para realizar la estadísticas descriptivas y cuatro script con la implentación de los algoritmos utilizados para predecir la pobreza de los hogares. A continuación, se detalla la estructura y contenido:
 
 - **Script de limpieza:** El archivo "1_Limpieza_Consolidado_v2.R" toma las bases de datos provistas como inputs para realizar el taller y realiza la imputacion de valores faltantes, tratamiento de valores extremos, limpieza de los datos y la consolidacion de las bases de entrenamiento y de testeo. 
 
 
-**Script de estadísticas descriptivas:** En el archivo "2_descriptive_statistics.R" se realiza la revisión de las observaciones y las variables de interés.
+- **Script de estadísticas descriptivas:** En el archivo "Poner_nombre.R" se realiza la revisión de las observaciones y las variables de interés y se generan las figuras y tablas que contienen las estadísticas descriptivas. 
 
-**Desarrollo de los puntos 3, 4 y 5:** Estos apartados están organizados en scripts independientes, numerados y nombrados según el tema que abordan.
+- **Implementación de los algoritmos:** Cuatro archivos *Elastic Net y Logit.R*, *Random_Forest_0.R*, *Random_Forest.R* y *Boosting.R* donde se realiza la implementación y la ejecución de la prediccion de la pobreza de los hogares por medio de Elastic Net y Regresion Logística (Logit), Random Forest y Adaptative Boosting (Adaboost) respectivamente. 
 
-**Carpeta de scripts iniciales:** Finalmente, se incluye la carpeta *Deprecated* con los scripts que cada miembro del equipo utilizó para comenzar a desarrollar el taller y posteriormente fueron remplazados por scripts consolidados después de un proceso de ajuste. 
+- **Carpeta de scripts iniciales:** Finalmente, se incluye la carpeta *Deprecated* con los scripts que cada miembro del equipo utilizó para comenzar a desarrollar el taller y posteriormente fueron remplazados por scripts consolidados después de un proceso de ajuste. 
 
 ## Stores
 Esta carpeta contiene las bases de datos utilizadas para la solución de los modelos. Incluye la base de datos original, llamada "datos_GEIH.rds", y la base de datos después del proceso de limpieza, denominada "datos_modelos.rds". Adicionalmente, se encuentran las bases de datos generadas mediante el método de Bootstrap con 1000 y 10000 iteraciones. Todos los archivos están almacenados en formato .rds para garantizar su compatibilidad y eficiencia en el manejo de la información.
 
-**Predicciones:** Se incluye una carpeta con las predicciones enviadas a Kaggle por los miembros del equipo. 
+- **Predicciones:** Se incluye una carpeta con las predicciones enviadas a Kaggle por los miembros del equipo. 
 
 ## Views
 Esta carpeta contiene las gráficas y tablas generadas en la solución del taller. Las gráficas están en formato PNG y las tablas en formato txt.
