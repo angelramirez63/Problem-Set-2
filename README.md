@@ -41,7 +41,7 @@ Esta carpeta contiene las gráficas y tablas generadas en la solución del talle
 
 ### Tablas (formato TXT):
 
-- **Métricas de desempeño de los modelos** En la carpeta están presentes los resultados de varias métricas de desempeño obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del de los algoritmos *Random Forest* y *Adaboost* las demas tablas con están presentes en el archivo .tex del documento
+- **Métricas de desempeño de los modelos** En la carpeta están presentes los resultados de varias métricas de desempeño obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del de los algoritmos *ElasticNet* , *Random Forest* y *Adaboost* las demas tablas con están presentes en el archivo .tex del documento
 
 - **tabla_estadisticas_descriptivas.tex:** Tabla realizada usando script "2_Estadísticas_Descriptivas.R"
 
