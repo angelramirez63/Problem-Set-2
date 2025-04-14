@@ -22,7 +22,7 @@ La carpeta *Scripts* contiene el script utilizado para limpiar y procesar las ba
 
 - **Script de estadísticas descriptivas:** En el archivo *2_Estadísticas_Descriptivas.R* se realizan las tablas con las estadísticas descriptivas para las personas clasificadas como *Pobres* y *No Pobres* con el comparar las diferencias entree ambos grupos. 
 
-- **Implementación de los algoritmos:** Cuatro archivos *Elastic Net y Logit.R*, *Random_Forest.R* y *Boosting.R* donde se realiza la implementación y la ejecución de la prediccion de la pobreza de los hogares por medio de Elastic Net y Regresion Logística (Logit), Random Forest y Adaptative Boosting (Adaboost) respectivamente. 
+- **Implementación de los algoritmos:** Cinco archivos *Elastic Net y Logit.R*, *CART.R*, *Random_Forest.R* y *Boosting.R* donde se realiza la implementación y la ejecución de la prediccion de la pobreza de los hogares por medio de Elastic Net y Regresion Logística (Logit), árbol de prediccióm, Random Forest y Adaptative Boosting (Adaboost) respectivamente. 
 
 - **Carpeta de scripts iniciales:** Finalmente, se incluye la carpeta *Deprecated* con los scripts que cada miembro del equipo utilizó para comenzar a desarrollar el taller y posteriormente fueron remplazados por scripts consolidados después de un proceso de ajuste. 
 
