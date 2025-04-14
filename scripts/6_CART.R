@@ -11,7 +11,7 @@ p_load(tidyverse, # tidy-data
 rm(list = ls())
 
 # Crear el directorio 
-setwd("C:/Users/Adram/OneDrive - Universidad de los Andes/8 OCTAVO SEMESTRE/BDML/Problem-Set-2/stores")
+setwd("")
 
 # Cargamos base final
 db <- readRDS("db_final.rds") %>% 
