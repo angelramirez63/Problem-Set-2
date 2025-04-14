@@ -12,7 +12,7 @@
 - [Views](#Views)
 
 ## Documentación
-Esta carpeta contiene el archivo final con la solución del taller en formato pdf y en formato Tex.
+Esta carpeta contiene el archivo final con la solución del taller en formato pdf y una carpeta comprimida con el archivo .tex 
 
 ## Scripts
 La carpeta *Scripts* contiene el script utilizado para limpiar y procesar las bases de datos, el script utilizado para realizar la estadísticas descriptivas y cuatro script con la implentación de los algoritmos utilizados para predecir la pobreza de los hogares. A continuación, se detalla la estructura y contenido:
