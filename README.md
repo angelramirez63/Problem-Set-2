@@ -20,7 +20,7 @@ La carpeta *Scripts* contiene el script utilizado para limpiar y procesar las ba
 - **Script de limpieza:** El archivo "1_Limpieza_Consolidado_v2.R" toma las bases de datos provistas como inputs para realizar el taller y realiza la imputacion de valores faltantes, tratamiento de valores extremos, limpieza de los datos y la consolidacion de las bases de entrenamiento y de testeo a nivel de hogar. 
 
 
-- **Script de estadísticas descriptivas:** En el archivo "Poner_nombre.R" se realiza la revisión de las observaciones y las variables de interés y se generan las figuras y tablas que contienen las estadísticas descriptivas. 
+- **Script de estadísticas descriptivas:** En el archivo "2_Estadísticas_Descriptivas.R" se realizan las tablas con las estadísticas descriptivas para las personas clasificadas como *Pobres* y *No Pobres* con el comparar las diferencias entree ambos grupos. 
 
 - **Implementación de los algoritmos:** Cuatro archivos *Elastic Net y Logit.R*, *Random_Forest_0.R*, *Random_Forest.R* y *Boosting.R* donde se realiza la implementación y la ejecución de la prediccion de la pobreza de los hogares por medio de Elastic Net y Regresion Logística (Logit), Random Forest y Adaptative Boosting (Adaboost) respectivamente. 
 
@@ -38,23 +38,10 @@ Esta carpeta contiene las gráficas y tablas generadas en la solución del talle
 
 - **desbalance_de_clases.png:** Gráfica que muestra la proporcion de pobres (Sí) y no pobres (No) en la base de datos de entrenmaiento para la variables Pobre. Esta gráfica se realizo para caracterizar el desbalance de clases en está variable. 
 
-**distribucion_errores.png:** Gráfica que representa la distribución de los errores del modelo.
-
-**salario_por_edad.png:** Gráfica que muestra la relación entre el salario y la edad.
-
-**salario_por_edad_genero.png:** Gráfica que compara los salarios por edad y género.
-
-**salario_por_edad_scatter.png:** Gráfica de dispersión que representa la relación entre el salario y la edad.
-
-**y_ingLab_m_ha.png:** Gráfica que posiblemente muestra ingresos laborales en función de alguna variable (el nombre completo no está especificado).
 
 ### Tablas (formato TXT):
-- **cv_Adaboost_Performance_Metrics.tex:** Tabla con los F_score obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del modelo Adaboost 
 
-- **cv_RForest1_results.tex:** Tabla con los resultados de varias métricas de desempeño obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del modelo Random Forest. 
+- **Métricas de desempeño de los modelos** En la carpeta están presentes los resultados de varias métricas de desempeño obtenidos por las combinaciones de hiperpárametros consideradas en la implementación del de los algoritmos *Random Forest* y *Adaboost* las demas tablas con están presentes en el archivo .tex del documento
 
-**tabla_comparacion_errores_prediccion.txt:** Tabla que compara los errores de predicción de las dififerentes aproximaciones.
+- **tabla_estadisticas_descriptivas.tex:** Tabla realizada usando script "2_Estadísticas_Descriptivas.R"
 
-**tabla_desempeño_validation_set.txt:** Tabla que detalla el desempeño de los diferentes modelos en el conjunto de validación.
-
-**tabla_intervalos_edad_pico.txt:** Tabla que presenta intervalos de edad donde se observan picos de ingreso.
